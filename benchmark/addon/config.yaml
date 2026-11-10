@@ -1,0 +1,20 @@
+name: Bellweather Benchmark
+version: "0.2.3"
+slug: bellweather_benchmark
+description: Records weather forecasts and station reports for the public Bellweather benchmark (docs/benchmark.md).
+
+arch:
+  - amd64
+  - aarch64
+init: false
+startup: application
+boot: auto
+options:
+  openweather_api_key: ""
+  contact: ""
+schema:
+  openweather_api_key: password?
+  contact: str?
+map:
+  - type: share
+    read_only: false

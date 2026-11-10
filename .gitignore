@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# The benchmark add-on is assembled by benchmark/build_addon.py
+benchmark/app/core/
+benchmark/app/points.json
+benchmark/app/data/
+benchmark/build/
+*.sqlite

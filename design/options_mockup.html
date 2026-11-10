@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bellweather options mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#039be5;--text:#212121;--muted:#5f6368;--helper:#6f6f6f;--line:#e0e0e0;--field:#f3f3f3;--page:#eef1f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text);font:14px/1.45 Roboto,system-ui,sans-serif}
+main{max-width:1320px;margin:0 auto;padding:28px 16px 48px}
+h1{font-weight:500;font-size:24px;margin:0 0 6px}
+.lead{color:var(--muted);max-width:860px;margin:0 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,390px),1fr));gap:28px 22px;margin-top:22px;align-items:start}
+.step{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cap{font-size:13px;color:var(--muted)}.cap b{color:var(--text);font-weight:500}
+.dialog{background:#fff;border-radius:24px;box-shadow:0 10px 30px rgba(20,30,60,.14);overflow:hidden;display:flex;flex-direction:column}
+.head{display:flex;align-items:center;gap:14px;padding:18px 20px 6px}
+.x{width:24px;height:24px;display:grid;place-items:center;color:#555;font-size:18px}
+.title{font-size:21px;font-weight:400}
+.body{padding:4px 24px 8px}
+.desc{color:var(--muted);margin:2px 0 14px}
+.foot{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px 16px}
+.btn{color:var(--primary);font-weight:500;padding:9px 14px;border-radius:20px}
+.btn.fill{background:var(--primary);color:#fff}
+/* menu */
+.menu{border-top:1px solid var(--line)}
+.mi{display:flex;align-items:center;gap:14px;padding:12px 24px;border-bottom:1px solid var(--line)}
+.mi .ic{width:36px;height:36px;border-radius:50%;background:#e8f4fc;color:var(--primary);display:grid;place-items:center;flex:none}
+.mi .ic svg{width:20px;height:20px}
+.mi .t{flex:1;min-width:0}.mi .t div{font-size:16px}.mi .t small{display:block;color:var(--muted);font-size:13px}
+.mi .ch{color:#9a9a9a;font-size:20px}
+.mi.save .t div{color:var(--primary);font-weight:500}
+/* fields */
+.label{font-size:13px;color:var(--muted);margin:14px 0 6px}
+.label:first-child{margin-top:4px}
+.helper{font-size:12px;color:var(--helper);margin:6px 2px 4px}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:7px 0}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid #757575;flex:none;margin-top:1px;display:grid;place-items:center}
+.radio.on{border-color:var(--primary)}.radio.on::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--primary)}
+.check{width:18px;height:18px;border-radius:3px;border:2px solid #757575;flex:none;margin-top:2px;display:grid;place-items:center;color:#fff;font-size:12px;line-height:1}
+.check.on{background:var(--primary);border-color:var(--primary)}
+.opt span{font-size:15px}.opt small{display:block;color:var(--muted);font-size:12px}
+.field{background:var(--field);border-radius:6px 6px 0 0;border-bottom:1px solid #8a8a8a;padding:8px 12px 8px;display:flex;align-items:center;gap:12px;min-height:54px}
+.field .ent{width:32px;height:32px;border-radius:50%;background:#e6e6e6;display:grid;place-items:center;color:#666;flex:none}
+.field .ent svg{width:18px;height:18px}
+.field .v{flex:1;min-width:0}.field .v small{display:block;font-size:12px;color:var(--muted)}.field .v div{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field .v .ph{color:#8a8a8a}
+.field .dd{color:#777}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 8px}
+.chip{display:flex;align-items:center;gap:8px;border:1px solid #c9c9c9;border-radius:16px;padding:4px 10px 4px 6px;font-size:13px}
+.chip i{width:20px;height:20px;border-radius:50%;background:#e8f4fc;color:var(--primary);display:grid;place-items:center;font-style:normal;font-size:11px}
+.add{color:var(--primary);font-weight:500;font-size:14px;padding:6px 0}
+.row{display:flex;align-items:center;gap:16px;padding:8px 0}
+.row .t{flex:1}.row .t div{font-size:15px}
+.toggle{width:36px;height:14px;border-radius:7px;background:#bdbdbd;position:relative;flex:none}
+.toggle::after{content:"";position:absolute;top:-3px;left:-2px;width:20px;height:20px;border-radius:50%;background:#fafafa;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.toggle.on{background:#81d4fa}.toggle.on::after{left:18px;background:var(--primary)}
+.group{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:18px 0 4px}
+.section{border:1px solid var(--line);border-radius:12px;margin:14px 0 6px;overflow:hidden}
+.section .sh{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.section .sh div{flex:1;font-size:15px}.section .sb{padding:0 14px 12px}
+.num{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:center;padding:5px 0}
+.num span{font-size:13px}
+.num .box{background:var(--field);border-bottom:1px solid #8a8a8a;border-radius:6px 6px 0 0;padding:8px 10px;font-size:15px;display:flex;justify-content:space-between}
+.num .box em{font-style:normal;color:var(--muted);font-size:13px}
+.fade{color:var(--muted);font-size:12px;padding:6px 0 0}
+.notes{margin-top:30px;background:#fff;border-radius:16px;padding:18px 22px;max-width:980px}
+.notes h2{font-size:16px;font-weight:500;margin:0 0 8px}.notes li{margin:5px 0}
+/* integration page */
+.ip{background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(20,30,60,.10);overflow:visible}
+.ip-head{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.ip-badge{width:40px;height:40px;flex:none}.ip-badge svg{display:block}
+.ip-t{flex:1}.ip-t div{font-size:18px}.ip-t small{color:var(--muted)}
+.ip-btn{background:var(--primary);color:#fff;border-radius:18px;padding:8px 14px;font-weight:500;font-size:13px;white-space:nowrap}
+.ip-entry{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.ip-entry .t{flex:1}.ip-entry .t div{font-size:15px}.ip-entry .t small{color:var(--muted);font-size:12px}
+.ip-ic{color:#666;font-size:18px;padding:0 4px}
+.ip-sub{display:flex;align-items:center;gap:12px;padding:10px 18px 10px 44px;border-bottom:1px solid var(--line);position:relative}
+.ip-sub:last-child{border-bottom:0}
+.ip-sub .t{flex:1}.ip-sub .t div{font-size:14px}.ip-sub .t small{color:var(--muted);font-size:12px}
+.pin{width:26px;height:26px;border-radius:50%;background:#e8f4fc;color:var(--primary);display:grid;place-items:center;font-size:13px;flex:none}
+.pop{position:absolute;right:14px;top:40px;background:#fff;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:6px 0;z-index:2;min-width:170px}
+.pop div{padding:8px 16px;font-size:14px}.pop .hl{background:#eef6fd}.pop .red{color:#c62828}
+.spacer{height:150px}
+/* map */
+.map{height:190px;border-radius:8px;position:relative;overflow:hidden;background:#e9efe4;border:1px solid #d6dcd2}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.maplab{position:absolute;left:8px;bottom:6px;font-size:11px;color:#556;background:rgba(255,255,255,.75);padding:1px 6px;border-radius:4px}
+.search{background:var(--field);border-radius:6px 6px 0 0;border-bottom:1px solid #8a8a8a;padding:8px 12px;min-height:54px;display:flex;align-items:center;gap:10px}
+.search .v{flex:1}.search small{display:block;font-size:12px;color:var(--muted)}.search .v div{font-size:15px}
+.info{background:#f1f7fd;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#334;margin:10px 0 4px}
+.info b{font-weight:500}
+.section.closed .sb{display:none}
+.mi .ic{font-size:16px}
+</style>
+</head>
+<body>
+<main>
+<h1>Bellweather settings with several locations</h1>
+<p class="lead">A mockup of the settings dialogs. One Bellweather integration holds any number of locations; each location is a device with its own entities, place and stations.
+Colours and shapes follow Home Assistant's default light theme only roughly: the real look comes from your HA version and theme. The places and heights in the search are real Open-Meteo results for "Bergen".</p>
+
+<div class="grid">
+
+<!-- A INTEGRATION PAGE -->
+<div class="step">
+<div class="cap"><b>A · Integration page</b>: locations as sub-entries</div>
+<div class="ip">
+<div class="ip-head"><div class="ip-badge"><svg width="40" height="40" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><path d="M76.800 0.000C87.628 0.000 96.651 0.000 104.302 3.898A27.000 27.000 0 0 1 116.102 15.698C120.000 23.349 120.000 32.372 120.000 43.200L120.000 76.800C120.000 87.628 120.000 96.651 116.102 104.302A27.000 27.000 0 0 1 104.302 116.102C96.651 120.000 87.628 120.000 76.800 120.000L43.200 120.000C32.372 120.000 23.349 120.000 15.698 116.102A27.000 27.000 0 0 1 3.898 104.302C0.000 96.651 0.000 87.628 0.000 76.800L0.000 43.200C0.000 32.372 0.000 23.349 3.898 15.698A27.000 27.000 0 0 1 15.698 3.898C23.349 0.000 32.372 0.000 43.200 0.000Z" fill="#1F5FD6"/><g transform="translate(7.603 7.567) scale(0.87333)"><path d="M57.74 28.07 L57.67 28.44 L57.53 28.79 L40.25 62.32 L39.86 63.15 L39.51 63.99 L39.19 64.85 L38.91 65.75 L38.67 66.63 L38.38 67.95 L38.23 68.86 L38.11 69.79 L38.02 71.14 L38.00 72.05 L38.02 72.99 L38.08 73.90 L38.24 75.27 L38.49 76.60 L38.70 77.51 L39.08 78.81 L39.39 79.70 L39.90 80.95 L40.50 82.19 L40.99 83.09 L41.13 83.42 L41.19 83.65 L41.26 84.19 L41.22 84.84 L41.07 85.53 L40.80 86.26 L40.45 86.95 L40.10 87.52 L39.58 88.22 L39.10 88.77 L38.41 89.46 L37.82 89.96 L36.96 90.59 L36.30 91.00 L35.18 91.59 L34.42 91.92 L33.67 92.19 L32.83 92.44 L32.33 92.56 L31.49 92.73 L30.44 92.88 L29.76 93.04 L29.11 93.29 L28.82 93.45 L28.53 93.65 L28.23 93.95 L28.05 94.22 L27.89 94.58 L27.81 94.92 L27.79 95.28 L27.83 95.68 L27.92 96.05 L28.09 96.41 L28.25 96.63 L28.44 96.82 L28.66 96.98 L28.98 97.14 L29.37 97.27 L29.71 97.34 L30.49 97.40 L89.49 97.40 L90.07 97.37 L90.58 97.29 L91.02 97.14 L91.34 96.98 L91.66 96.73 L91.94 96.36 L92.10 95.98 L92.20 95.46 L92.20 94.99 L92.09 94.51 L91.99 94.28 L91.87 94.08 L91.71 93.88 L91.53 93.70 L91.33 93.55 L91.02 93.35 L90.65 93.19 L90.24 93.04 L89.56 92.88 L88.51 92.73 L87.67 92.56 L86.80 92.34 L85.98 92.07 L84.77 91.56 L84.10 91.23 L83.42 90.83 L82.78 90.41 L82.14 89.93 L81.38 89.26 L80.85 88.73 L80.26 88.02 L79.86 87.46 L79.44 86.76 L79.17 86.19 L78.93 85.53 L78.78 84.84 L78.74 84.19 L78.81 83.65 L78.87 83.42 L79.01 83.09 L79.50 82.19 L80.10 80.95 L80.61 79.70 L80.92 78.81 L81.30 77.51 L81.60 76.17 L81.76 75.25 L81.92 73.90 L81.98 72.97 L82.00 72.05 L81.98 71.14 L81.89 69.79 L81.78 68.88 L81.62 67.95 L81.33 66.63 L81.09 65.75 L80.81 64.87 L80.50 64.01 L80.15 63.17 L79.75 62.32 L62.47 28.79 L62.33 28.44 L62.29 28.26 L62.25 27.88 L62.25 27.55 L57.74 27.55 Z M48.02 54.16 L48.22 53.89 L48.46 53.66 L48.74 53.48 L49.05 53.36 L49.38 53.30 L49.55 53.30 L49.88 53.34 L50.19 53.45 L50.48 53.61 L50.61 53.72 L50.84 53.96 L51.02 54.24 L51.14 54.55 L51.20 54.88 L51.20 55.05 L51.16 55.38 L51.11 55.54 L50.29 57.50 L49.66 59.35 L49.15 61.25 L48.75 63.22 L48.47 65.27 L48.30 67.39 L48.24 69.61 L48.30 72.10 L48.24 72.43 L48.13 72.74 L48.05 72.89 L47.85 73.15 L47.60 73.38 L47.46 73.47 L47.16 73.61 L46.83 73.68 L46.50 73.70 L46.17 73.64 L46.01 73.59 L45.86 73.53 L45.57 73.35 L45.45 73.25 L45.22 73.00 L45.06 72.71 L44.95 72.40 L44.90 72.07 L44.87 71.26 L44.84 69.59 L44.87 67.99 L44.95 66.42 L45.18 64.16 L45.40 62.67 L45.67 61.21 L46.01 59.78 L46.40 58.37 L46.86 56.99 L47.37 55.64 Z" fill="#FFFFFF" fill-rule="evenodd"/><path d="M37.40 10.13 L37.60 10.46 L37.72 10.83 L37.78 11.21 L37.76 11.60 L37.66 11.97 L37.50 12.32 L37.27 12.63 L36.96 12.95 L36.75 13.32 L36.63 13.70 L36.61 14.13 L36.67 14.46 L36.82 14.83 L37.01 15.10 L37.39 15.52 L37.59 15.85 L37.66 16.03 L37.76 16.40 L37.78 16.60 L37.76 16.98 L37.67 17.36 L37.60 17.54 L37.51 17.71 L37.28 18.02 L35.19 20.00 L35.01 20.20 L34.84 20.49 L34.74 20.74 L34.68 21.07 L34.67 21.31 L34.71 21.57 L34.77 21.80 L34.92 22.11 L35.07 22.32 L35.24 22.50 L35.45 22.66 L35.66 22.77 L35.92 22.86 L36.25 22.92 L37.55 22.91 L37.87 22.84 L38.22 22.68 L38.53 22.45 L44.24 17.09 L44.39 16.97 L44.70 16.77 L45.05 16.63 L45.42 16.56 L45.61 16.55 L55.75 16.55 L56.14 16.59 L56.33 16.64 L56.69 16.79 L57.02 17.00 L57.30 17.28 L57.51 17.61 L57.60 17.78 L57.71 18.16 L57.74 18.35 L57.74 27.90 L62.25 27.90 L62.25 27.88 L62.26 18.35 L62.34 17.97 L62.49 17.61 L62.59 17.44 L62.70 17.28 L62.98 17.00 L63.31 16.79 L63.67 16.64 L63.86 16.59 L64.25 16.55 L73.42 16.55 L73.81 16.59 L74.00 16.64 L74.36 16.79 L74.69 17.00 L74.97 17.28 L75.18 17.61 L75.33 17.97 L75.41 18.35 L75.42 19.20 L75.46 19.56 L75.60 19.94 L75.78 20.22 L76.09 20.53 L76.44 20.73 L76.86 20.86 L77.09 20.88 L77.36 20.86 L77.69 20.78 L77.97 20.65 L87.39 15.37 L87.63 15.15 L87.83 14.89 L87.98 14.59 L88.06 14.28 L88.08 14.05 L88.06 13.72 L87.98 13.41 L87.83 13.11 L87.57 12.78 L87.39 12.63 L87.19 12.50 L77.97 7.35 L77.59 7.19 L77.19 7.13 L76.86 7.14 L76.44 7.27 L76.09 7.47 L75.78 7.78 L75.60 8.06 L75.46 8.44 L75.42 8.80 L75.41 9.65 L75.33 10.03 L75.18 10.39 L74.97 10.72 L74.83 10.86 L74.53 11.11 L74.18 11.30 L73.81 11.41 L73.62 11.44 L45.42 11.44 L45.24 11.41 L44.87 11.31 L44.70 11.23 L44.39 11.03 L38.53 5.55 L38.30 5.37 L37.93 5.18 L37.55 5.09 L36.34 5.08 L35.92 5.14 L35.60 5.26 L35.32 5.44 L35.07 5.68 L34.88 5.95 L34.75 6.26 L34.68 6.59 L34.68 6.93 L34.74 7.26 L34.92 7.66 L35.12 7.93 L37.28 9.98 Z" fill="#FFB31A" fill-rule="evenodd"/><circle cx="60" cy="107.5" r="7.5" fill="#FFFFFF"/></g></svg>
+</div><div class="ip-t"><div>Bellweather</div><small>2 locations · 2 devices</small></div><div class="ip-btn">+ Add location</div></div>
+<div class="ip-entry"><div class="t"><div>Bellweather</div><small>Shared settings: privacy, sources, airport archive</small></div><div class="ip-ic">⚙</div><div class="ip-ic">⋮</div></div>
+<div class="ip-sub"><div class="pin">⌂</div><div class="t"><div>Home</div><small>1 device · 27 entities</small></div><div class="ip-ic">⋮</div></div>
+<div class="ip-sub"><div class="pin">⌖</div><div class="t"><div>Lake house</div><small>1 device · 27 entities</small></div><div class="ip-ic">⋮</div>
+<div class="pop"><div class="hl">Reconfigure</div><div>Devices</div><div>Entities</div><div class="red">Delete</div></div></div>
+</div>
+<div class="spacer"></div>
+<div class="helper">The button text comes from Bellweather's own translations, so it says "Add location". Newer Home Assistant shows it as a button on the integration page; 2025.4 shows the same item in the entry's ⋮ menu.</div>
+</div>
+
+<!-- B ADD LOCATION: WHERE -->
+<div class="step">
+<div class="cap"><b>B · Add location</b>: name, search, map</div>
+<div class="dialog">
+<div class="head"><div class="x">✕</div><div class="title">Add location</div></div>
+<div class="body">
+<p class="desc">Name the place and put the pin on it. The search is optional.</p>
+<div class="field"><div class="v"><small>Name</small><div>Lake house</div></div></div>
+<div class="helper">Becomes the device name and the start of the entity ids, for example weather.lake_house.</div>
+<div style="height:10px"></div>
+<div class="search"><div class="v"><small>Find a town, village or postcode</small><div>Bergen</div></div><span class="dd">⌕</span></div>
+<div class="helper">Only what you type into this field is sent, to Open-Meteo's place search, which Bellweather already uses for the forecast. Leave it empty to place the pin by hand.</div>
+<div class="label">Location</div>
+<div class="map"><svg viewBox="0 0 400 190" preserveAspectRatio="xMidYMid slice">
+<rect width="400" height="190" fill="#e9efe4"/><path d="M0 120 C80 100 120 150 210 130 S330 90 400 110 V190 H0Z" fill="#cfe3f3"/>
+<path d="M20 0 L120 190 M0 60 L400 40 M260 0 L300 190 M0 160 L400 175" stroke="#fff" stroke-width="5" fill="none"/>
+<path d="M150 0 C170 60 160 100 200 190" stroke="#f6d48b" stroke-width="4" fill="none"/>
+<g transform="translate(200 86)"><path d="M0 0 C-14 -18 -14 -34 0 -34 C14 -34 14 -18 0 0Z" fill="#d93a3a"/><circle cx="0" cy="-23" r="5" fill="#fff"/></g>
+</svg><div class="maplab">Starts at Home Assistant's home location</div></div>
+<div class="helper">Drag the pin, or click on the map. Nothing is sent while you use the map.</div>
+</div>
+<div class="foot"><div class="btn">Cancel</div><div class="btn fill">Next</div></div>
+</div>
+</div>
+
+<!-- C PICK -->
+<div class="step">
+<div class="cap"><b>C · Pick the place</b>: only when something was searched</div>
+<div class="dialog">
+<div class="head"><div class="x">‹</div><div class="title">Which Bergen?</div></div>
+<div class="body">
+<p class="desc">Places matching "Bergen". Pick one; you can fine-tune the pin next.</p>
+<div class="opt"><div class="radio on"></div><span>Bergen<small>Vestland, Norway · 20 m</small></span></div>
+<div class="opt"><div class="radio"></div><span>Bergen<small>North Holland, the Netherlands · 3 m</small></span></div>
+<div class="opt"><div class="radio"></div><span>Bergen<small>New York, United States · 185 m</small></span></div>
+<div class="opt"><div class="radio"></div><span>Bergen<small>Bavaria, Germany · 548 m</small></span></div>
+<div class="opt"><div class="radio"></div><span>None of these<small>Back to the map</small></span></div>
+</div>
+<div class="foot"><div class="btn fill">Next</div></div>
+</div>
+</div>
+
+<!-- D FINE TUNE -->
+<div class="step">
+<div class="cap"><b>D · Fine-tune</b>: the pin on the chosen place</div>
+<div class="dialog">
+<div class="head"><div class="x">‹</div><div class="title">Lake house</div></div>
+<div class="body">
+<p class="desc">The pin is on Bergen, Vestland. Move it to the exact spot if you like.</p>
+<div class="map"><svg viewBox="0 0 400 190" preserveAspectRatio="xMidYMid slice">
+<rect width="400" height="190" fill="#e9efe4"/><path d="M0 120 C80 100 120 150 210 130 S330 90 400 110 V190 H0Z" fill="#cfe3f3"/>
+<path d="M20 0 L120 190 M0 60 L400 40 M260 0 L300 190 M0 160 L400 175" stroke="#fff" stroke-width="5" fill="none"/>
+<path d="M150 0 C170 60 160 100 200 190" stroke="#f6d48b" stroke-width="4" fill="none"/>
+<g transform="translate(200 86)"><path d="M0 0 C-14 -18 -14 -34 0 -34 C14 -34 14 -18 0 0Z" fill="#d93a3a"/><circle cx="0" cy="-23" r="5" fill="#fff"/></g>
+</svg><div class="maplab">Bergen, Vestland, Norway</div></div>
+<div class="field" style="margin-top:12px"><div class="v"><small>Height above sea level</small><div>20</div></div><div class="dd">m</div></div>
+<div class="helper">Filled in from the place search. For a pin placed by hand it comes from the elevation service, which gets only the shared, rounded point, so in hilly places check it and correct it. Stations are compared with this height.</div>
+</div>
+<div class="foot"><div class="btn fill">Add location</div></div>
+</div>
+</div>
+
+<!-- E LOCATION MENU -->
+<div class="step">
+<div class="cap"><b>E · Reconfigure a location</b>: ⋮ on its row</div>
+<div class="dialog">
+<div class="head"><div class="x">✕</div><div class="title">Lake house</div></div>
+<div class="body"><p class="desc">Settings for this location only. Your changes are kept until you choose Save.</p></div>
+<div class="menu">
+<div class="mi"><div class="ic">⌖</div><div class="t"><div>Name and place</div><small>Rename, search, move the pin</small></div><div class="ch">›</div></div>
+<div class="mi"><div class="ic">≈</div><div class="t"><div>Your own sensors</div><small>Your own measurements at this location</small></div><div class="ch">›</div></div>
+<div class="mi"><div class="ic">☁</div><div class="t"><div>Forecast members</div><small>Your weather entities in this location's blend</small></div><div class="ch">›</div></div>
+<div class="mi"><div class="ic">▲</div><div class="t"><div>Stations and limits</div><small>Ignore a station; how far and how high a station may be</small></div><div class="ch">›</div></div>
+<div class="mi save"><div class="ic" style="background:var(--primary);color:#fff">✓</div><div class="t"><div>Save and close</div><small>Applies all changes and reloads Bellweather</small></div></div>
+</div>
+</div>
+</div>
+
+<!-- F STATIONS AND LIMITS -->
+<div class="step">
+<div class="cap"><b>F · Stations and limits</b>: one section per group</div>
+<div class="dialog">
+<div class="head"><div class="x">‹</div><div class="title">Stations and limits</div></div>
+<div class="body">
+<div class="label">Stations to ignore</div>
+<div class="field"><div class="v"><div class="ph">Choose from the stations seen near this location</div></div><div class="dd">▾</div></div>
+<div class="helper">A station that gives wrong values, for example one in a sheltered spot.</div>
+<div class="info"><b>When nothing is within the limits.</b> Each value has a fixed order of sources. If no official station reports within its limits, the nearest airport within its limit is used; if there is none either, the weather model's value for this point. The entity's <i>source</i> attribute always says which one it is. Precipitation in the last hour has no model step: without radar or a station in range it shows as unavailable, rather than a guess.</div>
+<div class="section"><div class="sh"><div>Precipitation</div><span class="dd">▴</span></div><div class="sb">
+<div class="num"><span>Official station: max. distance</span><div class="box">15<em>km</em></div></div>
+<div class="num"><span>Airport: max. distance</span><div class="box">30<em>km</em></div></div></div></div>
+<div class="section closed"><div class="sh"><div>Wind</div><span class="dd">▾</span></div><div class="sb"></div></div>
+<div class="section closed"><div class="sh"><div>Visibility, fog and cloud</div><span class="dd">▾</span></div><div class="sb"></div></div>
+<div class="section closed"><div class="sh"><div>Temperature, dew point and humidity</div><span class="dd">▾</span></div><div class="sb"></div></div>
+<div class="section closed"><div class="sh"><div>Pressure</div><span class="dd">▾</span></div><div class="sb"></div></div>
+<div class="section closed"><div class="sh"><div>Snow depth</div><span class="dd">▾</span></div><div class="sb"></div></div>
+<div class="helper">All 15 limits are on this page: each group is a section that opens with a click. Wind, temperature and snow also have a height limit.</div>
+</div>
+<div class="foot"><div class="btn">Back to the menu</div></div>
+</div>
+</div>
+
+<!-- G SHARED MENU -->
+<div class="step">
+<div class="cap"><b>G · Shared settings</b>: the cog on Bellweather</div>
+<div class="dialog">
+<div class="head"><div class="x">✕</div><div class="title">Bellweather options</div></div>
+<div class="body"><p class="desc">These apply to every location: which services may be asked, and what they learn.</p></div>
+<div class="menu">
+<div class="mi"><div class="ic">◎</div><div class="t"><div>Location privacy</div><small>How precisely weather services learn where a location is</small></div><div class="ch">›</div></div>
+<div class="mi"><div class="ic">⊕</div><div class="t"><div>Sources</div><small>Which services are asked, and what each one adds</small></div><div class="ch">›</div></div>
+<div class="mi"><div class="ic">✈</div><div class="t"><div>Airport archive</div><small>Correct the forecast from day one</small></div><div class="ch">›</div></div>
+<div class="mi save"><div class="ic" style="background:var(--primary);color:#fff">✓</div><div class="t"><div>Save and close</div><small>Applies all changes and reloads Bellweather</small></div></div>
+</div>
+</div>
+</div>
+
+</div>
+
+<div class="notes">
+<h2>How it would work</h2>
+<ul>
+<li><b>Locations.</b> One Bellweather integration, any number of locations. "+ Add location" (A) opens B to D; each location becomes its own device with its own entities, named after the location.</li>
+<li><b>Changing a place.</b> Every location row has a ⋮ menu with <b>Reconfigure</b> (A). It opens that location's own menu (E): name and place, own sensors, forecast members, stations and limits. Moving the pin uses the same map and search as adding. Nothing changes until "Save and close", which reloads Bellweather (all locations, a few seconds).</li>
+<li><b>Shared settings.</b> The cog on the Bellweather row (G) holds what is one decision for the whole home: how precisely services learn a location, which services are asked, and the airport archive.</li>
+<li><b>Map and search.</b> The map is Home Assistant's own location picker; Bellweather sends nothing while you use it. The search goes only to Open-Meteo's place search (GeoNames data), a service Bellweather already uses, so no new company learns anything. It finds towns, villages and postcodes, not street addresses; the pin then goes to the exact spot. Street addresses would need OpenStreetMap's Nominatim, whose rules (a server that can be switched without an update, attribution, at most one request per second across all users) do not fit an integration installed in many homes.</li>
+<li><b>Limits.</b> All six groups are on one page as sections that open with a click (F). If nothing is within a limit, the next source in line answers, as the blue box says.</li>
+<li><b>Versions.</b> The grey line under each menu item needs a newer Home Assistant: it exists in 2026.10, not in 2025.4; on older versions only the names show. Sub-entries, their Reconfigure and the "Add location" text work from 2025.4.</li>
+</ul>
+</div>
+</main>
+</body>
+</html>

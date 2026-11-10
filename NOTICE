@@ -1,0 +1,23 @@
+Bellweather for Home Assistant
+Copyright 2026 bazsc20ne
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version. See LICENSE.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+Third-party material
+--------------------
+
+branding/ and custom_components/bellweather/brand/ (the wordmark and the
+motto in the logos)
+  Artwork drawn from the Outfit typeface, SIL Open Font License 1.1.
+  No font file is included.
+
+Weather data comes from the services listed in README.md, "Data and
+thanks", each under its own terms.

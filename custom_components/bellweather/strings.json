@@ -1,0 +1,452 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bellweather",
+        "description": "The weather here and now, measured, and the best forecast for your home, scored against what was measured. These two settings apply to every location; the first location comes next. Every choice is explained in the documentation on privacy, security and sources.",
+        "data": {
+          "precision": "Location shared with weather services",
+          "sources": "Sources"
+        },
+        "data_description": {
+          "precision": "What services that need a point receive. Exact: this location. Rounded: the centre of a grid cell of this size (the point can be up to 0.7 times the size away). Stations, airports and radar never need the point: they receive a larger area or nothing, and the nearest one is chosen inside Home Assistant, so for them rounding costs nothing. The forecast and the model values answer for the rounded point: 1-5 km keeps the advantage of the high-resolution regional models, 10 km (default) is a middle way, 25 km hides most and makes the forecast less local near hills and coasts.",
+          "sources": "Each source you switch off receives nothing at all. Switching one off makes the values less direct or less local."
+        }
+      },
+      "location": {
+        "title": "Location",
+        "description": "Name the place and put the pin on it. The search is optional.",
+        "data": {
+          "name": "Name",
+          "search": "Find a place or address",
+          "location": "Location"
+        },
+        "data_description": {
+          "name": "Becomes the device name and the start of the entity ids, for example weather.home.",
+          "search": "Optional: a town, a postcode, or a street address such as \"Main Street 5, Town\". Only what you type is sent. A place name goes to Open-Meteo's place search, which Bellweather already uses for the forecast. Text with a house number or a comma, or a name Open-Meteo does not know, goes to the address search: OpenStreetMap's Nominatim, unless changed in Bellweather's options. A house is found only where OpenStreetMap has its number; otherwise you get the street and move the pin. Leave it empty to place the pin by hand.",
+          "location": "Drag the pin or click on the map. Nothing is sent while you use the map. Distances to stations are always measured from the pin, inside Home Assistant."
+        }
+      },
+      "pick": {
+        "title": "Pick the place",
+        "description": "Results for your search. Pick one; next you can move the pin to the exact spot. {attribution}",
+        "data": {
+          "place": "Place"
+        }
+      },
+      "place": {
+        "title": "{name}",
+        "description": "Move the pin to the exact spot if you like, and check the height.",
+        "data": {
+          "location": "Location",
+          "elevation": "Height above sea level"
+        },
+        "data_description": {
+          "location": "Distances to stations are measured from this point, inside Home Assistant. Services that need a point get only the rounded one.",
+          "elevation": "Filled in from the place search, or from Home Assistant for its home. For a pin placed by hand it comes from the elevation service, which gets only the rounded point, so in hilly places check it. Stations are compared with this height; empty: heights are not compared."
+        }
+      }
+    },
+    "error": {
+      "name_required": "Give the location a name.",
+      "search_failed": "The place search did not answer. Try again, or place the pin by hand.",
+      "no_match": "Nothing found. Try another spelling, a postcode, or the street with the town (for example \"Main Street 5, Town\"); or leave the search empty and place the pin by hand.",
+      "already_configured": "This place is already a location.",
+      "invalid_location": "Put the pin on the map."
+    },
+    "abort": {
+      "single_instance_allowed": "Bellweather is already set up. Add more places with \"Add location\"."
+    }
+  },
+  "config_subentries": {
+    "location": {
+      "initiate_flow": {
+        "user": "Add location"
+      },
+      "entry_type": "Location",
+      "step": {
+        "location": {
+          "title": "Location",
+          "description": "Name the place and put the pin on it. The search is optional.",
+          "data": {
+            "name": "Name",
+            "search": "Find a place or address",
+            "location": "Location"
+          },
+          "data_description": {
+            "name": "Becomes the device name and the start of the entity ids, for example weather.home.",
+            "search": "Optional: a town, a postcode, or a street address such as \"Main Street 5, Town\". Only what you type is sent. A place name goes to Open-Meteo's place search, which Bellweather already uses for the forecast. Text with a house number or a comma, or a name Open-Meteo does not know, goes to the address search: OpenStreetMap's Nominatim, unless changed in Bellweather's options. A house is found only where OpenStreetMap has its number; otherwise you get the street and move the pin. Leave it empty to place the pin by hand.",
+            "location": "Drag the pin or click on the map. Nothing is sent while you use the map. Distances to stations are always measured from the pin, inside Home Assistant."
+          }
+        },
+        "pick": {
+          "title": "Pick the place",
+          "description": "Results for your search. Pick one; next you can move the pin to the exact spot. {attribution}",
+          "data": {
+            "place": "Place"
+          }
+        },
+        "place": {
+          "title": "{name}",
+          "description": "Move the pin to the exact spot if you like, and check the height.",
+          "data": {
+            "location": "Location",
+            "elevation": "Height above sea level"
+          },
+          "data_description": {
+            "location": "Distances to stations are measured from this point, inside Home Assistant. Services that need a point get only the rounded one.",
+            "elevation": "Filled in from the place search, or from Home Assistant for its home. For a pin placed by hand it comes from the elevation service, which gets only the rounded point, so in hilly places check it. Stations are compared with this height; empty: heights are not compared."
+          }
+        },
+        "reconfigure": {
+          "title": "{name}",
+          "description": "Settings for this location only. Open a page, change what you like, and its button brings you back to this menu. Nothing is saved until you choose Save and close; the X closes without saving.",
+          "menu_options": {
+            "location": "Name and place",
+            "sensors": "Your own sensors",
+            "members": "Forecast members",
+            "stations": "Stations and limits",
+            "save": "Save and close"
+          },
+          "menu_option_descriptions": {
+            "location": "Rename, search, move the pin",
+            "sensors": "Your own measurements at this location",
+            "members": "Your weather entities in this location's blend",
+            "stations": "Ignore a station; how far and how high a station may be",
+            "save": "Applies all changes and reloads Bellweather"
+          }
+        },
+        "sensors": {
+          "title": "Your own sensors",
+          "description": "Optional. Pick the sensors you have at {name} and leave the rest empty. Your own sensors win over every public source. Only sensors of the right kind are offered. \"Back to the menu\" keeps what you entered; nothing is saved until \"Save and close\".",
+          "data": {
+            "local_temperature": "Own temperature sensor",
+            "local_humidity": "Own humidity sensor",
+            "local_pressure": "Own sea-level pressure sensor",
+            "local_rain_rate": "Own rain rate sensor",
+            "local_rain_state": "Own rain detector",
+            "local_wind_speed": "Own wind speed sensor",
+            "local_wind_gust": "Own wind gust sensor",
+            "local_wind_direction": "Own wind direction sensor",
+            "local_visibility": "Own visibility sensor",
+            "local_snow_depth": "Own snow depth sensor",
+            "weather_entity": "Weather entity (last fallback)"
+          },
+          "data_description": {
+            "local_rain_state": "A rain detector (moisture class). Leak sensors share this class: pick the rain one.",
+            "local_pressure": "Pressure reduced to sea level (often called relative pressure). Absolute pressure at the sensor is not converted.",
+            "weather_entity": "Used only when no observation is available for a value."
+          },
+          "submit": "Back to the menu"
+        },
+        "members": {
+          "title": "Forecast members",
+          "description": "Optional, for {name}. \"Back to the menu\" keeps what you entered; nothing is saved until \"Save and close\".",
+          "data": {
+            "forecast_members": "Your weather entities as forecast members"
+          },
+          "data_description": {
+            "forecast_members": "Optional. Their hourly forecasts join the blend, are recorded and scored like the built-in models, and are weighted by their own record after about 20 days. Nothing leaves Home Assistant for this."
+          },
+          "submit": "Back to the menu"
+        },
+        "stations": {
+          "title": "Stations and limits",
+          "description": "When nothing is within the limits: each value has a fixed order of sources. If no official station reports within its limits, the nearest airport within its limit is used; if there is none either, the weather model's value for this point. The entity's source attribute always says which one it is. Precipitation in the last hour has no model step: without radar or a station in range it shows as unavailable rather than a guess. Larger limits find a value more often, smaller ones keep it closer; the defaults are starting values. \"Back to the menu\" keeps what you entered; nothing is saved until \"Save and close\".",
+          "data": {
+            "excluded_stations": "Stations to ignore"
+          },
+          "data_description": {
+            "excluded_stations": "A station that gives wrong values, for example one in a sheltered spot. The list shows the stations seen near the location."
+          },
+          "sections": {
+            "limits_precipitation": {
+              "name": "Precipitation",
+              "data": {
+                "station_km": "Official station: max. distance",
+                "airport_km": "Airport: max. distance"
+              }
+            },
+            "limits_wind": {
+              "name": "Wind",
+              "data": {
+                "station_km": "Official station: max. distance",
+                "airport_km": "Airport: max. distance",
+                "height_m": "Station: max. height difference"
+              }
+            },
+            "limits_sight": {
+              "name": "Visibility, fog and cloud",
+              "data": {
+                "station_km": "Official station: max. distance",
+                "airport_km": "Airport: max. distance"
+              }
+            },
+            "limits_temperature": {
+              "name": "Temperature, dew point and humidity",
+              "data": {
+                "station_km": "Official station: max. distance",
+                "airport_km": "Airport: max. distance",
+                "height_m": "Station: max. height difference"
+              }
+            },
+            "limits_pressure": {
+              "name": "Pressure",
+              "data": {
+                "station_km": "Official station: max. distance",
+                "airport_km": "Airport: max. distance"
+              }
+            },
+            "limits_snow": {
+              "name": "Snow depth",
+              "data": {
+                "station_km": "Official station: max. distance",
+                "airport_km": "Airport: max. distance",
+                "height_m": "Station: max. height difference"
+              }
+            }
+          },
+          "submit": "Back to the menu"
+        }
+      },
+      "error": {
+        "name_required": "Give the location a name.",
+        "search_failed": "The place search did not answer. Try again, or place the pin by hand.",
+        "no_match": "Nothing found. Try another spelling, a postcode, or the street with the town (for example \"Main Street 5, Town\"); or leave the search empty and place the pin by hand.",
+        "already_configured": "This place is already a location.",
+        "invalid_location": "Put the pin on the map."
+      },
+      "abort": {
+        "reconfigure_successful": "Saved. Bellweather has reloaded."
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bellweather options",
+        "description": "These apply to every location: which services may be asked, and what they learn. Open a page, change what you like, and its button brings you back to this menu. Nothing is saved until you choose Save and close; the X closes without saving.",
+        "menu_options": {
+          "privacy": "Location privacy",
+          "sources": "Sources",
+          "search": "Address search",
+          "archive": "Airport archive",
+          "save": "Save and close"
+        },
+        "menu_option_descriptions": {
+          "privacy": "How precisely weather services learn where a location is",
+          "sources": "Which services are asked, and what each one adds",
+          "search": "Where street addresses are looked up when you place a location",
+          "archive": "Correct the forecast from day one",
+          "save": "Applies all changes and reloads Bellweather"
+        }
+      },
+      "privacy": {
+        "title": "Location privacy",
+        "data": {
+          "precision": "Location shared with weather services"
+        },
+        "data_description": {
+          "precision": "What services that need a point receive. Exact: this location. Rounded: the centre of a grid cell of this size (the point can be up to 0.7 times the size away). Stations, airports and radar never need the point: they receive a larger area or nothing, and the nearest one is chosen inside Home Assistant, so for them rounding costs nothing. The forecast and the model values answer for the rounded point: 1-5 km keeps the advantage of the high-resolution regional models, 10 km (default) is a middle way, 25 km hides most and makes the forecast less local near hills and coasts."
+        },
+        "submit": "Back to the menu",
+        "description": "\"Back to the menu\" keeps what you entered; nothing is saved until \"Save and close\"."
+      },
+      "sources": {
+        "title": "Sources",
+        "data": {
+          "sources": "Sources"
+        },
+        "data_description": {
+          "sources": "Each source you switch off receives nothing at all. Switching one off makes the values less direct or less local."
+        },
+        "submit": "Back to the menu",
+        "description": "\"Back to the menu\" keeps what you entered; nothing is saved until \"Save and close\"."
+      },
+      "archive": {
+        "title": "Airport archive",
+        "data": {
+          "use_airport_archive": "Learn from the nearest airport's archive at once"
+        },
+        "data_description": {
+          "use_airport_archive": "Off by default. On: the Iowa Environmental Mesonet sends 60 days of the nearest airport's reports, so the forecast is corrected from the first day instead of after about 20 days. Cost: one more service learns that airport's code, which says roughly where you live."
+        },
+        "submit": "Back to the menu",
+        "description": "\"Back to the menu\" keeps what you entered; nothing is saved until \"Save and close\"."
+      },
+      "search": {
+        "title": "Address search",
+        "description": "Used only while you place a location, and only for text with a house number or a comma, or a name Open-Meteo's place search does not know. Only the typed text is sent, at most once a second, and the same text is not asked again for a day. The default is OpenStreetMap's Nominatim; its usage policy asks that applications can switch to another server or stop, which is what this setting does. \"Back to the menu\" keeps what you entered; nothing is saved until \"Save and close\".",
+        "data": {
+          "address_server": "Nominatim server"
+        },
+        "data_description": {
+          "address_server": "https://nominatim.openstreetmap.org, or your own or another provider's Nominatim-compatible server (https only). Empty: no address search; place names still work, and the pin can always be placed by hand."
+        },
+        "submit": "Back to the menu"
+      }
+    },
+    "error": {
+      "invalid_server": "Give an https address of a Nominatim-compatible server, without a user name, password or query; or leave it empty."
+    }
+  },
+  "selector": {
+    "precision": {
+      "options": {
+        "exact": "Exact location",
+        "1": "Rounded to about 1 km",
+        "5": "Rounded to about 5 km",
+        "10": "Rounded to about 10 km",
+        "25": "Rounded to about 25 km"
+      }
+    },
+    "sources": {
+      "options": {
+        "rainviewer": "Radar at the exact point and the radar nowcast (RainViewer)",
+        "esoh": "Official stations, Europe (EUMETNET E-SOH)",
+        "metar": "Airports worldwide (METAR, NOAA AWC)",
+        "open_meteo": "Model values and snow depth (Open-Meteo, ECMWF)",
+        "ims": "Satellite snow map, Northern Hemisphere (NOAA/USNIC IMS)",
+        "met_nowcast": "Official radar nowcast, Nordic countries (MET Norway)"
+      }
+    },
+    "place": {
+      "options": {
+        "none": "None of these: back to the map"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "rain_now": {
+        "name": "Precipitation now"
+      },
+      "thunder": {
+        "name": "Thunder"
+      },
+      "fog": {
+        "name": "Fog"
+      },
+      "snow_on_ground": {
+        "name": "Snow on the ground"
+      },
+      "precip_expected": {
+        "name": "Precipitation within an hour"
+      }
+    },
+    "sensor": {
+      "condition": {
+        "name": "Weather now",
+        "state": {
+          "clear-night": "Clear, night",
+          "cloudy": "Cloudy",
+          "exceptional": "Exceptional",
+          "fog": "Fog",
+          "hail": "Hail",
+          "lightning": "Lightning",
+          "lightning-rainy": "Lightning, rainy",
+          "partlycloudy": "Partly cloudy",
+          "pouring": "Pouring",
+          "rainy": "Rainy",
+          "snowy": "Snowy",
+          "snowy-rainy": "Snowy, rainy",
+          "sunny": "Sunny",
+          "windy": "Windy",
+          "windy-variant": "Windy, cloudy"
+        }
+      },
+      "temperature": {
+        "name": "Temperature"
+      },
+      "apparent_temperature": {
+        "name": "Feels like"
+      },
+      "dew_point": {
+        "name": "Dew point"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "pressure": {
+        "name": "Pressure"
+      },
+      "intensity": {
+        "name": "Precipitation intensity"
+      },
+      "intensity_class": {
+        "name": "Precipitation class",
+        "state": {
+          "dry": "Dry",
+          "drizzle": "Drizzle",
+          "light": "Light",
+          "moderate": "Moderate",
+          "heavy": "Heavy",
+          "extreme": "Extreme"
+        }
+      },
+      "precip_type": {
+        "name": "Precipitation type",
+        "state": {
+          "none": "None",
+          "drizzle": "Drizzle",
+          "rain": "Rain",
+          "freezing_rain": "Freezing rain",
+          "sleet": "Sleet",
+          "snow": "Snow",
+          "hail": "Hail"
+        }
+      },
+      "precip_last_hour": {
+        "name": "Precipitation last hour"
+      },
+      "precip_last_24h": {
+        "name": "Precipitation last 24 hours"
+      },
+      "last_precip": {
+        "name": "Last precipitation"
+      },
+      "wind_speed": {
+        "name": "Wind speed"
+      },
+      "wind_gust": {
+        "name": "Wind gust"
+      },
+      "wind_direction": {
+        "name": "Wind direction"
+      },
+      "visibility": {
+        "name": "Visibility"
+      },
+      "cloud_cover": {
+        "name": "Cloud cover"
+      },
+      "snow_depth": {
+        "name": "Snow depth"
+      },
+      "sources_working": {
+        "name": "Sources working"
+      },
+      "precip_next_hour": {
+        "name": "Precipitation next hour"
+      },
+      "precip_starts_in": {
+        "name": "Precipitation starts in"
+      },
+      "precip_stops_in": {
+        "name": "Precipitation stops in"
+      },
+      "nowcast_hit_rate": {
+        "name": "Nowcast hit rate"
+      },
+      "forecast_temperature_error": {
+        "name": "Forecast error, temperature"
+      },
+      "forecast_wind_error": {
+        "name": "Forecast error, wind"
+      },
+      "forecast_precip_hit_rate": {
+        "name": "Forecast hit rate, precipitation"
+      }
+    }
+  }
+}

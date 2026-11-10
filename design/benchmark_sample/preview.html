@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark sample</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.1/github-markdown-light.css">
+<style>
+  body { margin: 0; background: #ffffff; color: #1f2328; font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; }
+  header.repo { border-bottom: 1px solid #d1d9e0; background: #f6f8fa; padding: 16px 32px 0; }
+  .crumb { font-size: 20px; margin-bottom: 12px; }
+  .crumb a { color: #0969da; text-decoration: none; }
+  .crumb b { font-weight: 600; }
+  .badge { display: inline-block; border: 1px solid #d1d9e0; border-radius: 2em; font-size: 12px; padding: 0 7px; margin-left: 8px; color: #59636e; vertical-align: middle; }
+  nav.tabs { display: flex; gap: 4px; }
+  nav.tabs button { border: 0; background: none; padding: 8px 14px; font: inherit; cursor: pointer; color: #1f2328; border-bottom: 2px solid transparent; }
+  nav.tabs button.on { border-bottom-color: #fd8c73; font-weight: 600; }
+  main { max-width: 1012px; margin: 24px auto; padding: 0 16px; }
+  .box { border: 1px solid #d1d9e0; border-radius: 6px; }
+  .box-head { background: #f6f8fa; border-bottom: 1px solid #d1d9e0; border-radius: 6px 6px 0 0; padding: 8px 16px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: #59636e; display: flex; justify-content: space-between; }
+  .markdown-body { padding: 32px; }
+  .markdown-alert { padding: 8px 16px; margin-bottom: 16px; border-left: .25em solid #9a6700; }
+  .markdown-alert-title { color: #9a6700; font-weight: 500; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .markdown-alert p:last-child { margin-bottom: 0; }
+  @media (max-width: 600px) { header.repo { padding: 12px 16px 0; } .markdown-body { padding: 16px; } }
+</style>
+</head>
+<body>
+<header class="repo">
+  <div class="crumb"><a href="#">bellweather</a> / <a href="#">docs</a> / <a href="#">benchmark</a> / <b id="fname"></b><span class="badge">sample</span></div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+<main>
+  <div class="box">
+    <div class="box-head"><span id="fpath"></span><span>Preview</span></div>
+    <article class="markdown-body" id="doc"></article>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script>
+const DOCS = {"report-7-days.md": "# Benchmark report: 7 days\n\n> [!WARNING]\n> **Sample, not a result.** Built from data downloaded for earlier tests, to\n> show what a report will look like. It uses 6 public airports instead of\n> random addresses, and stand-ins for two providers (see the notes). The\n> real benchmark has not started yet; its method is in\n> [docs/benchmark.md](../../docs/benchmark.md).\n\n**Period:** 2 to 8 November 2026 · **Places:** 6 · **Lead time:** day 1\n(the forecast made the day before) · **Hours scored:** 1,006, the same\nhours for everyone · **Wet hours:** 87\n\n## Summary\n\nLower is better, except the wet-hour score. The best value in each column\nis in bold.\n\n| | Temperature | Dew point | Wind speed | Pressure | Wet hours (CSI) ↑ |\n|---|---:|---:|---:|---:|---:|\n| **Bellweather** | 1.08 °C | **0.91 °C** | **2.70 km/h** | **0.53 hPa** | 0.16 |\n| *Bellweather without correction (control)* | *1.01 °C* | *0.96 °C* | *2.68 km/h* | *0.81 hPa* | *0.16* |\n| MET Norway (Yr)¹ | 1.15 °C | 1.02 °C | 3.22 km/h | 0.93 hPa | 0.21 |\n| OpenWeather² | – | – | – | – | – |\n| Open-Meteo | 1.11 °C | 1.04 °C | 2.89 km/h | 1.08 hPa | 0.12 |\n| DWD³ | **0.97 °C** | 1.01 °C | 3.10 km/h | 1.11 hPa | 0.14 |\n| ECMWF IFS | 1.26 °C | 1.18 °C | 3.13 km/h | 0.78 hPa | **0.22** |\n\nCompetitors are listed by how many Home Assistant installations use them:\nMET Norway 479,240, OpenWeather 25,327, Open-Meteo 19,871, DWD 10,560\n(Home Assistant analytics, 8 November 2026). ECMWF IFS is a weather model\nused by most providers; it is shown as a reference.\n\n## Temperature by place\n\n| | Paris | Oslo | Vienna | Chicago | London | Madrid |\n|---|---:|---:|---:|---:|---:|---:|\n| **Bellweather** | 1.23 | 1.51 | **0.86** | 1.19 | **0.66** | 1.02 |\n| *control* | *1.21* | *1.45* | *0.86* | *0.83* | *0.63* | *1.05* |\n| MET Norway (Yr)¹ | 1.22 | 1.82 | 1.05 | 1.01 | 0.68 | 1.11 |\n| OpenWeather² | – | – | – | – | – | – |\n| Open-Meteo | **1.03** | 1.82 | 1.18 | 1.05 | 0.76 | **0.82** |\n| DWD³ | 1.04 | **1.01** | 1.10 | 1.07 | 0.78 | 0.83 |\n| ECMWF IFS | 1.21 | 2.50 | 1.02 | **0.97** | 0.72 | 1.13 |\n\nMean absolute error in °C. Bold: best of the providers; the control is not\ncounted.\n\n## Reading this week\n\n- Bellweather had the lowest error for dew point, wind and pressure, and\n  not for temperature or wet hours.\n- Its correction made temperature worse this week: the control, the same\n  models without correction, was better at four of six places, most at\n  Chicago (0.83 against 1.19 °C). The correction learns from the 30 days\n  before; a week whose weather differs from them can go either way.\n- Only 87 wet hours: too few for a firm wet-hour score.\n- One week is about 1,000 hours. Differences of a few hundredths of a\n  degree are within chance. The 30-day report says more.\n\n## Notes\n\n1. Stand-in: MET Norway's model as served by Open-Meteo, not its\n   Locationforecast product. The real benchmark asks Locationforecast.\n2. OpenWeather keeps no past forecasts, so this sample has none. The real\n   benchmark records them from the first day.\n3. Stand-in: DWD's ICON model as served by Open-Meteo, not its MOSMIX\n   product. The real benchmark asks MOSMIX.\n\nWet hours: CSI = hits / (hits + misses + false alarms); 1 is perfect.\nBellweather and the control share the same wet-hour rule (precipitation\nis not corrected), so their scores are the same.\n\nData: Iowa Environmental Mesonet (airport reports), Open-Meteo (CC BY 4.0).\n", "report-30-days.md": "# Benchmark report: 30 days\n\n> [!WARNING]\n> **Sample, not a result.** Built from data downloaded for earlier tests, to\n> show what a report will look like. It uses 6 public airports instead of\n> random addresses, and stand-ins for two providers (see the notes). The\n> real benchmark has not started yet; its method is in\n> [docs/benchmark.md](../../docs/benchmark.md).\n\n**Period:** 10 October to 8 November 2026 · **Places:** 6 · **Lead time:**\nday 1 (the forecast made the day before) · **Hours scored:** 4,311, the\nsame hours for everyone · **Wet hours:** 541\n\n## Summary\n\nLower is better, except the wet-hour score. The best value in each column\nis in bold.\n\n| | Temperature | Dew point | Wind speed | Pressure | Wet hours (CSI) ↑ |\n|---|---:|---:|---:|---:|---:|\n| **Bellweather** | **0.88 °C** | **0.80 °C** | **3.13 km/h** | **0.48 hPa** | **0.49** |\n| *Bellweather without correction (control)* | *0.93 °C* | *0.84 °C* | *3.39 km/h* | *0.67 hPa* | *0.49* |\n| MET Norway (Yr)¹ | 1.06 °C | 1.08 °C | 4.00 km/h | 0.78 hPa | 0.40 |\n| OpenWeather² | – | – | – | – | – |\n| Open-Meteo | 1.07 °C | 1.01 °C | 3.50 km/h | 0.93 hPa | 0.43 |\n| DWD³ | 1.01 °C | 1.01 °C | 4.02 km/h | 0.87 hPa | 0.40 |\n| ECMWF IFS | 1.13 °C | 1.10 °C | 3.93 km/h | 0.64 hPa | 0.42 |\n\nCompetitors are listed by how many Home Assistant installations use them:\nMET Norway 479,240, OpenWeather 25,327, Open-Meteo 19,871, DWD 10,560\n(Home Assistant analytics, 8 November 2026). ECMWF IFS is a weather model\nused by most providers; it is shown as a reference.\n\n**Compared with the best other provider in each column:** temperature\n13 % lower error (DWD 1.01 °C), dew point 21 % (Open-Meteo and DWD\n1.01 °C), wind 11 % (Open-Meteo 3.50 km/h), pressure 25 % (ECMWF IFS\n0.64 hPa), wet hours 0.06 higher (Open-Meteo 0.43).\n\n## Temperature by place\n\n| | Paris | Oslo | Vienna | Chicago | London | Madrid |\n|---|---:|---:|---:|---:|---:|---:|\n| **Bellweather** | **0.91** | **0.98** | **0.87** | **0.81** | **0.67** | 1.03 |\n| *control* | *0.96* | *1.04* | *0.86* | *0.93* | *0.78* | *1.03* |\n| MET Norway (Yr)¹ | 1.02 | 1.12 | 1.00 | 1.12 | 0.86 | 1.23 |\n| OpenWeather² | – | – | – | – | – | – |\n| Open-Meteo | 1.00 | 1.12 | 1.14 | 1.42 | 0.79 | **0.97** |\n| DWD³ | 1.01 | 1.02 | 1.09 | 1.08 | 0.90 | 0.98 |\n| ECMWF IFS | 1.01 | 1.50 | 0.97 | 1.19 | 0.91 | 1.20 |\n\nMean absolute error in °C. Bold: best of the providers; the control is not\ncounted.\n\n## Reading this month\n\n- Bellweather had the lowest error in all five columns.\n- It was not best everywhere: at Madrid, Open-Meteo (0.97 °C) and DWD\n  (0.98 °C) were better than Bellweather (1.03 °C) for temperature.\n- The correction helped most for pressure (0.67 → 0.48 hPa) and wind\n  (3.39 → 3.13 km/h); for temperature it made no real difference at\n  Vienna (0.86 → 0.87 °C) and Madrid (1.03 → 1.03 °C).\n- Over the same 30 days the week above went the other way for\n  temperature: a single week is not enough to judge.\n\n## Notes\n\n1. Stand-in: MET Norway's model as served by Open-Meteo, not its\n   Locationforecast product. The real benchmark asks Locationforecast.\n2. OpenWeather keeps no past forecasts, so this sample has none. The real\n   benchmark records them from the first day.\n3. Stand-in: DWD's ICON model as served by Open-Meteo, not its MOSMIX\n   product. The real benchmark asks MOSMIX.\n\nWet hours: CSI = hits / (hits + misses + false alarms); 1 is perfect.\nBellweather and the control share the same wet-hour rule (precipitation\nis not corrected), so their scores are the same.\n\nData: Iowa Environmental Mesonet (airport reports), Open-Meteo (CC BY 4.0).\n"};
+const names = Object.keys(DOCS);
+function alerts(root) {
+  root.querySelectorAll("blockquote").forEach(q => {
+    const p = q.querySelector("p");
+    if (!p || !/^\[!WARNING\]/.test(p.textContent.trim())) return;
+    p.innerHTML = p.innerHTML.replace(/^\s*\[!WARNING\]\s*(<br>)?/, "");
+    const div = document.createElement("div");
+    div.className = "markdown-alert";
+    div.innerHTML = '<p class="markdown-alert-title">&#9888;&#xFE0F; Warning</p>' + q.innerHTML;
+    q.replaceWith(div);
+  });
+}
+function show(name) {
+  document.getElementById("fname").textContent = name;
+  document.getElementById("fpath").textContent = "docs/benchmark/" + name;
+  const doc = document.getElementById("doc");
+  doc.innerHTML = marked.parse(DOCS[name], { gfm: true });
+  alerts(doc);
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.name === name));
+}
+const tabs = document.getElementById("tabs");
+names.forEach(n => { const b = document.createElement("button"); b.textContent = n; b.dataset.name = n; b.onclick = () => show(n); tabs.appendChild(b); });
+show(names[0]);
+</script>
+</body>
+</html>

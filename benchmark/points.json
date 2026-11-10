@@ -1,0 +1,705 @@
+{
+ "seed": 20261111,
+ "rules": "Draw the benchmark's random addresses (docs/benchmark.md).\n\n    python -I benchmark/select_points.py DATA_DIR OUT_JSON\n\nDATA_DIR holds the public inputs, downloaded as they were on the day of the\ndraw: GeoNames cities15000.txt and countryInfo.txt (CC BY 4.0), the\naviationweather.gov station cache (stations.cache.json.gz), the E-SOH\nstation list (collections/observations/locations) and DWD's MOSMIX station\ncatalogue. The seed is fixed, so the same inputs give the same list.\n\nRules:\n- per continent, draw a town with a chance in proportion to its population,\n  then a uniform random point up to 3 km from its centre;\n- keep it if an official station that reports air temperature lies within\n  5 km and within 50 m of height (heights of both from the same elevation\n  model, Open-Meteo / Copernicus DEM, so they compare like with like);\n- the station must have reported at least 20 hours of the last 24;\n- 4 addresses per continent; a station is used once.\n",
+ "points": [
+  {
+   "id": "eu1",
+   "continent": "EU",
+   "town": "Białystok",
+   "country": "PL",
+   "town_population": 295683,
+   "latitude": 53.1421,
+   "longitude": 23.1473,
+   "elevation_m": 137,
+   "truth": {
+    "kind": "esoh",
+    "id": "0-20000-0-12295",
+    "name": "BIALYSTOK",
+    "latitude": 53.1,
+    "longitude": 23.16666,
+    "distance_km": 4.86,
+    "height_difference_m": 13,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "12295",
+    "distance_km": 4.9
+   },
+   "draw": 9,
+   "archive_airport": null
+  },
+  {
+   "id": "eu2",
+   "continent": "EU",
+   "town": "Pest",
+   "country": "HU",
+   "town_population": 1001748,
+   "latitude": 47.4777,
+   "longitude": 19.0905,
+   "elevation_m": 117,
+   "truth": {
+    "kind": "esoh",
+    "id": "0-348-1-44505",
+    "name": "Budapest_Lágymányos",
+    "latitude": 47.47472,
+    "longitude": 19.06194,
+    "distance_km": 2.18,
+    "height_difference_m": -11,
+    "hours_last_24": 25
+   },
+   "mosmix": {
+    "id": "12840",
+    "distance_km": 6.1
+   },
+   "draw": 10,
+   "archive_airport": {
+    "icao": "LHBP",
+    "latitude": 47.437,
+    "longitude": 19.256,
+    "distance_km": 13.2
+   }
+  },
+  {
+   "id": "eu3",
+   "continent": "EU",
+   "town": "Târgu Jiu",
+   "country": "RO",
+   "town_population": 73545,
+   "latitude": 45.0659,
+   "longitude": 23.3098,
+   "elevation_m": 232,
+   "truth": {
+    "kind": "esoh",
+    "id": "0-20000-0-15340",
+    "name": "TARGU_JIU",
+    "latitude": 45.04056,
+    "longitude": 23.26028,
+    "distance_km": 4.8,
+    "height_difference_m": -27,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "15260",
+    "distance_km": 104.7
+   },
+   "draw": 14,
+   "archive_airport": null
+  },
+  {
+   "id": "eu4",
+   "continent": "EU",
+   "town": "Turku",
+   "country": "FI",
+   "town_population": 206655,
+   "latitude": 60.4579,
+   "longitude": 22.2466,
+   "elevation_m": 20,
+   "truth": {
+    "kind": "esoh",
+    "id": "0-246-0-100949",
+    "name": "Turku Artukainen",
+    "latitude": 60.4544,
+    "longitude": 22.1787,
+    "distance_km": 3.74,
+    "height_difference_m": -10,
+    "hours_last_24": 25
+   },
+   "mosmix": {
+    "id": "02972",
+    "distance_km": 6.6
+   },
+   "draw": 20,
+   "archive_airport": {
+    "icao": "EFTU",
+    "latitude": 60.514,
+    "longitude": 22.263,
+    "distance_km": 6.3
+   }
+  },
+  {
+   "id": "as1",
+   "continent": "AS",
+   "town": "Jammu",
+   "country": "IN",
+   "town_population": 576198,
+   "latitude": 32.7224,
+   "longitude": 74.8692,
+   "elevation_m": 303,
+   "truth": {
+    "kind": "metar",
+    "id": "VIJU",
+    "name": "Jammu Arpt",
+    "latitude": 32.689,
+    "longitude": 74.837,
+    "distance_km": 4.78,
+    "height_difference_m": -13,
+    "hours_last_24": 22
+   },
+   "mosmix": {
+    "id": "41640",
+    "distance_km": 139.8
+   },
+   "draw": 5,
+   "archive_airport": {
+    "icao": "OPST",
+    "latitude": 32.536,
+    "longitude": 74.364,
+    "distance_km": 51.7
+   }
+  },
+  {
+   "id": "as2",
+   "continent": "AS",
+   "town": "Seongnam-si",
+   "country": "KR",
+   "town_population": 914832,
+   "latitude": 37.4534,
+   "longitude": 127.1164,
+   "elevation_m": 20,
+   "truth": {
+    "kind": "metar",
+    "id": "RKSM",
+    "name": "Seoul",
+    "latitude": 37.446,
+    "longitude": 127.114,
+    "distance_km": 0.85,
+    "height_difference_m": 0,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "47108",
+    "distance_km": 18.3
+   },
+   "draw": 44,
+   "archive_airport": {
+    "icao": "RKSH",
+    "latitude": 37.52,
+    "longitude": 126.98,
+    "distance_km": 14.1
+   }
+  },
+  {
+   "id": "as3",
+   "continent": "AS",
+   "town": "Fujairah",
+   "country": "AE",
+   "town_population": 118933,
+   "latitude": 25.093,
+   "longitude": 56.3335,
+   "elevation_m": 14,
+   "truth": {
+    "kind": "metar",
+    "id": "OMFJ",
+    "name": "Fujairah Intl",
+    "latitude": 25.112,
+    "longitude": 56.324,
+    "distance_km": 2.32,
+    "height_difference_m": 16,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "F9752",
+    "distance_km": 3.1
+   },
+   "draw": 81,
+   "archive_airport": null
+  },
+  {
+   "id": "as4",
+   "continent": "AS",
+   "town": "Taipei",
+   "country": "TW",
+   "town_population": 7871900,
+   "latitude": 25.0631,
+   "longitude": 121.5239,
+   "elevation_m": 12,
+   "truth": {
+    "kind": "metar",
+    "id": "RCSS",
+    "name": "Taipei/Songshan Arpt",
+    "latitude": 25.069,
+    "longitude": 121.552,
+    "distance_km": 2.91,
+    "height_difference_m": -8,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "58968",
+    "distance_km": 3.4
+   },
+   "draw": 84,
+   "archive_airport": {
+    "icao": "RCUK",
+    "latitude": 24.933,
+    "longitude": 121.3,
+    "distance_km": 26.8
+   }
+  },
+  {
+   "id": "na1",
+   "continent": "NA",
+   "town": "Westminster",
+   "country": "US",
+   "town_population": 92114,
+   "latitude": 33.759,
+   "longitude": -118.0241,
+   "elevation_m": 10,
+   "truth": {
+    "kind": "metar",
+    "id": "KSLI",
+    "name": "Los Alamitos AAF",
+    "latitude": 33.796,
+    "longitude": -118.042,
+    "distance_km": 4.44,
+    "height_difference_m": -1,
+    "hours_last_24": 23
+   },
+   "mosmix": {
+    "id": "72295",
+    "distance_km": 39.8
+   },
+   "draw": 7,
+   "archive_airport": {
+    "icao": "KLGB",
+    "latitude": 33.81177,
+    "longitude": -118.14717,
+    "distance_km": 12.8
+   }
+  },
+  {
+   "id": "na2",
+   "continent": "NA",
+   "town": "East Harlem",
+   "country": "US",
+   "town_population": 115921,
+   "latitude": 40.8072,
+   "longitude": -73.941,
+   "elevation_m": 18,
+   "truth": {
+    "kind": "metar",
+    "id": "KNYC",
+    "name": "New York/Central Park",
+    "latitude": 40.779,
+    "longitude": -73.9692,
+    "distance_km": 3.93,
+    "height_difference_m": 26,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "72503",
+    "distance_km": 5.7
+   },
+   "draw": 24,
+   "archive_airport": {
+    "icao": "KLGA",
+    "latitude": 40.77945,
+    "longitude": -73.88027,
+    "distance_km": 6.0
+   }
+  },
+  {
+   "id": "na3",
+   "continent": "NA",
+   "town": "Blaine",
+   "country": "US",
+   "town_population": 62124,
+   "latitude": 45.1523,
+   "longitude": -93.2232,
+   "elevation_m": 274,
+   "truth": {
+    "kind": "metar",
+    "id": "KANE",
+    "name": "Blaine/Anoka Cnty",
+    "latitude": 45.1426,
+    "longitude": -93.21273,
+    "distance_km": 1.35,
+    "height_difference_m": 1,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "72658",
+    "distance_km": 29.9
+   },
+   "draw": 28,
+   "archive_airport": {
+    "icao": "KMIC",
+    "latitude": 45.0623,
+    "longitude": -93.35108,
+    "distance_km": 14.2
+   }
+  },
+  {
+   "id": "na4",
+   "continent": "NA",
+   "town": "Cleveland",
+   "country": "US",
+   "town_population": 365379,
+   "latitude": 41.5104,
+   "longitude": -81.6782,
+   "elevation_m": 194,
+   "truth": {
+    "kind": "metar",
+    "id": "KBKL",
+    "name": "Cleveland/Burke Lakefront Arpt",
+    "latitude": 41.51732,
+    "longitude": -81.68318,
+    "distance_km": 0.87,
+    "height_difference_m": -18,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "72524",
+    "distance_km": 18.9
+   },
+   "draw": 35,
+   "archive_airport": {
+    "icao": "KCGF",
+    "latitude": 41.56599,
+    "longitude": -81.48267,
+    "distance_km": 17.4
+   }
+  },
+  {
+   "id": "sa1",
+   "continent": "SA",
+   "town": "Rio de Janeiro",
+   "country": "BR",
+   "town_population": 6747815,
+   "latitude": -22.8913,
+   "longitude": -43.1662,
+   "elevation_m": 0,
+   "truth": {
+    "kind": "metar",
+    "id": "SBRJ",
+    "name": "Rio de Janeiro/Dumont Arpt",
+    "latitude": -22.91,
+    "longitude": -43.163,
+    "distance_km": 2.11,
+    "height_difference_m": 3,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "83743",
+    "distance_km": 2.8
+   },
+   "draw": 7,
+   "archive_airport": {
+    "icao": "SBGL",
+    "latitude": -22.815,
+    "longitude": -43.261,
+    "distance_km": 12.9
+   }
+  },
+  {
+   "id": "sa2",
+   "continent": "SA",
+   "town": "Goiânia",
+   "country": "BR",
+   "town_population": 1536097,
+   "latitude": -16.6558,
+   "longitude": -49.2588,
+   "elevation_m": 709,
+   "truth": {
+    "kind": "metar",
+    "id": "SBGO",
+    "name": "Goiania/Genoveva Arpt",
+    "latitude": -16.632,
+    "longitude": -49.221,
+    "distance_km": 4.82,
+    "height_difference_m": 32,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "83423",
+    "distance_km": 4.0
+   },
+   "draw": 70,
+   "archive_airport": {
+    "icao": "SBAN",
+    "latitude": -16.229,
+    "longitude": -48.964,
+    "distance_km": 56.9
+   }
+  },
+  {
+   "id": "sa3",
+   "continent": "SA",
+   "town": "Medellín",
+   "country": "CO",
+   "town_population": 1999979,
+   "latitude": 6.2522,
+   "longitude": -75.587,
+   "elevation_m": 1479,
+   "truth": {
+    "kind": "metar",
+    "id": "SKMD",
+    "name": "Medellin/Herrera Arpt",
+    "latitude": 6.221,
+    "longitude": -75.59,
+    "distance_km": 3.49,
+    "height_difference_m": 12,
+    "hours_last_24": 22
+   },
+   "mosmix": {
+    "id": "80110",
+    "distance_km": 4.2
+   },
+   "draw": 72,
+   "archive_airport": {
+    "icao": "SKRG",
+    "latitude": 6.169,
+    "longitude": -75.426,
+    "distance_km": 20.1
+   }
+  },
+  {
+   "id": "sa4",
+   "continent": "SA",
+   "town": "Campina Grande",
+   "country": "BR",
+   "town_population": 443911,
+   "latitude": -7.2354,
+   "longitude": -35.8781,
+   "elevation_m": 511,
+   "truth": {
+    "kind": "metar",
+    "id": "SBKG",
+    "name": "Campina Grande Arpt",
+    "latitude": -7.27,
+    "longitude": -35.895,
+    "distance_km": 4.28,
+    "height_difference_m": -16,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "82795",
+    "distance_km": 2.4
+   },
+   "draw": 120,
+   "archive_airport": null
+  },
+  {
+   "id": "af1",
+   "continent": "AF",
+   "town": "N'Djamena",
+   "country": "TD",
+   "town_population": 1359526,
+   "latitude": 12.113,
+   "longitude": 15.064,
+   "elevation_m": 296,
+   "truth": {
+    "kind": "metar",
+    "id": "FTTJ",
+    "name": "N'Djamena Intl",
+    "latitude": 12.134,
+    "longitude": 15.034,
+    "distance_km": 4.01,
+    "height_difference_m": -2,
+    "hours_last_24": 22
+   },
+   "mosmix": {
+    "id": "64700",
+    "distance_km": 4.0
+   },
+   "draw": 4,
+   "archive_airport": null
+  },
+  {
+   "id": "af2",
+   "continent": "AF",
+   "town": "Casablanca",
+   "country": "MA",
+   "town_population": 3665954,
+   "latitude": 33.5801,
+   "longitude": -7.6158,
+   "elevation_m": 46,
+   "truth": {
+    "kind": "metar",
+    "id": "GMMC",
+    "name": "Casablanca/Anfa Arpt",
+    "latitude": 33.557,
+    "longitude": -7.66,
+    "distance_km": 4.83,
+    "height_difference_m": 4,
+    "hours_last_24": 23
+   },
+   "mosmix": {
+    "id": "60155",
+    "distance_km": 4.9
+   },
+   "draw": 10,
+   "archive_airport": {
+    "icao": "GMMN",
+    "latitude": 33.367,
+    "longitude": -7.59,
+    "distance_km": 23.8
+   }
+  },
+  {
+   "id": "af3",
+   "continent": "AF",
+   "town": "Nampula",
+   "country": "MZ",
+   "town_population": 770379,
+   "latitude": -15.0952,
+   "longitude": 39.2702,
+   "elevation_m": 410,
+   "truth": {
+    "kind": "metar",
+    "id": "FQNP",
+    "name": "Nampula Arpt",
+    "latitude": -15.106,
+    "longitude": 39.282,
+    "distance_km": 1.74,
+    "height_difference_m": 19,
+    "hours_last_24": 22
+   },
+   "mosmix": {
+    "id": "67237",
+    "distance_km": 1.5
+   },
+   "draw": 87,
+   "archive_airport": null
+  },
+  {
+   "id": "af4",
+   "continent": "AF",
+   "town": "Kumasi",
+   "country": "GH",
+   "town_population": 2544530,
+   "latitude": 6.7088,
+   "longitude": -1.6271,
+   "elevation_m": 283,
+   "truth": {
+    "kind": "metar",
+    "id": "DGSI",
+    "name": "Kumasi Arpt",
+    "latitude": 6.715,
+    "longitude": -1.591,
+    "distance_km": 4.04,
+    "height_difference_m": 2,
+    "hours_last_24": 21
+   },
+   "mosmix": {
+    "id": "65545",
+    "distance_km": 196.2
+   },
+   "draw": 107,
+   "archive_airport": null
+  },
+  {
+   "id": "oc1",
+   "continent": "OC",
+   "town": "Dubbo",
+   "country": "AU",
+   "town_population": 43516,
+   "latitude": -32.233,
+   "longitude": 148.6181,
+   "elevation_m": 263,
+   "truth": {
+    "kind": "metar",
+    "id": "YSDU",
+    "name": "Dubbo Rgnl",
+    "latitude": -32.221,
+    "longitude": 148.575,
+    "distance_km": 4.27,
+    "height_difference_m": 21,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "94743",
+    "distance_km": 217.6
+   },
+   "draw": 9,
+   "archive_airport": null
+  },
+  {
+   "id": "oc2",
+   "continent": "OC",
+   "town": "Wellington",
+   "country": "NZ",
+   "town_population": 381900,
+   "latitude": -41.3026,
+   "longitude": 174.8015,
+   "elevation_m": 50,
+   "truth": {
+    "kind": "metar",
+    "id": "NZWN",
+    "name": "Wellington Intl",
+    "latitude": -41.331,
+    "longitude": 174.806,
+    "distance_km": 3.18,
+    "height_difference_m": -46,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "93436",
+    "distance_km": 3.4
+   },
+   "draw": 16,
+   "archive_airport": {
+    "icao": "NZPP",
+    "latitude": -40.906,
+    "longitude": 174.988,
+    "distance_km": 46.8
+   }
+  },
+  {
+   "id": "oc3",
+   "continent": "OC",
+   "town": "Rockhampton",
+   "country": "AU",
+   "town_population": 81021,
+   "latitude": -23.382,
+   "longitude": 150.4923,
+   "elevation_m": 43,
+   "truth": {
+    "kind": "metar",
+    "id": "YBRK",
+    "name": "Rockhampton Arpt",
+    "latitude": -23.375,
+    "longitude": 150.477,
+    "distance_km": 1.75,
+    "height_difference_m": -33,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "94374",
+    "distance_km": 0.9
+   },
+   "draw": 108,
+   "archive_airport": null
+  },
+  {
+   "id": "oc4",
+   "continent": "OC",
+   "town": "Willetton",
+   "country": "AU",
+   "town_population": 19262,
+   "latitude": -32.0688,
+   "longitude": 115.9049,
+   "elevation_m": 28,
+   "truth": {
+    "kind": "metar",
+    "id": "YPJT",
+    "name": "Perth/Jandakot Arpt",
+    "latitude": -32.101,
+    "longitude": 115.879,
+    "distance_km": 4.33,
+    "height_difference_m": 2,
+    "hours_last_24": 24
+   },
+   "mosmix": {
+    "id": "94608",
+    "distance_km": 13.7
+   },
+   "draw": 116,
+   "archive_airport": {
+    "icao": "YPPH",
+    "latitude": -31.927,
+    "longitude": 115.976,
+    "distance_km": 17.1
+   }
+  }
+ ]
+}
