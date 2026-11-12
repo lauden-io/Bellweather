@@ -241,19 +241,68 @@ def parse_locations(data: dict[str, Any], box=None) -> dict[str, tuple[str, floa
 ElevationLookup = Callable[[list[tuple[float, float]]], Awaitable[list[float | None]]]
 
 
+class StationHeights:
+    """Ground heights of stations, shared by every location and kept across
+    restarts. A station's height does not change, and Open-Meteo counts every
+    point of a height request as one call, so each station is asked once. The
+    key holds the station's coordinates too: a station that moves is asked
+    again. Stations without a height are remembered until the next restart
+    only, so a gap in the elevation data is tried again one day."""
+
+    MAX = 5000  # far more than any box holds; a damaged store cannot grow without end
+
+    def __init__(self) -> None:
+        self._heights: dict[str, float] = {}
+        self.missing: set[str] = set()
+        self.changed = False
+
+    @staticmethod
+    def key(sid: str, point: tuple[float, float]) -> str:
+        return f"{sid}@{point[0]:.4f},{point[1]:.4f}"
+
+    def get(self, key: str) -> float | None:
+        return self._heights.get(key)
+
+    def put(self, key: str, height: float) -> None:
+        if len(self._heights) < self.MAX and self._heights.get(key) != height:
+            self._heights[key] = height
+            self.changed = True
+
+    def __contains__(self, key: str) -> bool:
+        return key in self._heights or key in self.missing
+
+    def dump(self) -> dict[str, Any]:
+        return {"heights": dict(self._heights)}
+
+    def load(self, data: Any) -> None:
+        """Only well-formed entries: a text key of sane length and a height
+        from -500 to 9000 m."""
+        heights = data.get("heights") if isinstance(data, dict) else None
+        for key, value in (heights.items() if isinstance(heights, dict) else []):
+            h = finite(value)
+            if isinstance(key, str) and 0 < len(key) <= 100 and h is not None and -500 <= h <= 9000:
+                if len(self._heights) >= self.MAX:
+                    break
+                self._heights[key] = h
+
+
 class EsohSource(Source):
     key = "esoh"
     kind = Kind.STATION
     attribution = "EUMETNET E-SOH (MeteoGate), CC BY 4.0"
     sends = "a box around the shared point (search radius 40 km by default, plus the rounding)"
 
-    def __init__(self, elevation_lookup: ElevationLookup | None = None, radius_km: float = SEARCH_RADIUS_KM) -> None:
+    def __init__(
+        self,
+        elevation_lookup: ElevationLookup | None = None,
+        radius_km: float = SEARCH_RADIUS_KM,
+        heights: StationHeights | None = None,
+    ) -> None:
         self.radius_km = min(max(radius_km, 1.0), MAX_RADIUS_KM)
         self._names: dict[str, str] = {}
         self._coords: dict[str, tuple[float, float]] = {}
         self._names_at: datetime | None = None
-        self._elevations: dict[str, float] = {}
-        self._no_elevation: set[str] = set()
+        self._heights = heights if heights is not None else StationHeights()
         self._elevation_failed: datetime | None = None
         self._elevation_lookup = elevation_lookup
 
@@ -272,7 +321,7 @@ class EsohSource(Source):
         retried for a day, so a broken answer cannot multiply requests."""
         if self._elevation_lookup is None or (self._elevation_failed and now - self._elevation_failed < timedelta(days=1)):
             return
-        missing = [sid for sid in self._coords if sid not in self._elevations and sid not in self._no_elevation]
+        missing = [sid for sid, point in self._coords.items() if StationHeights.key(sid, point) not in self._heights]
         if missing:
             batch = missing[:100]  # the elevation API takes up to 100 points
             try:
@@ -280,11 +329,20 @@ class EsohSource(Source):
             except Exception:
                 self._elevation_failed = now
                 raise
-            self._no_elevation |= {sid for sid, h in zip(batch, heights, strict=False) if finite(h) is None}
             for sid, h in zip(batch, heights, strict=False):
-                h = finite(h)
+                key, h = StationHeights.key(sid, self._coords[sid]), finite(h)
                 if h is not None and -500 <= h <= 9000:
-                    self._elevations[sid] = h
+                    self._heights.put(key, h)
+                else:
+                    self._heights.missing.add(key)
+
+    def _elevations(self) -> dict[str, float]:
+        out = {}
+        for sid, point in self._coords.items():
+            h = self._heights.get(StationHeights.key(sid, point))
+            if h is not None:
+                out[sid] = h
+        return out
 
     async def fetch(self, http: Http, location: Location, precision: Precision, now: datetime) -> list[Reading]:
         try:
@@ -301,7 +359,7 @@ class EsohSource(Source):
         data = await http.get_json(URL, {"coords": polygon, "datetime": f"{since}/.."}, limit=CAP_ESOH)
         # A large box can hold many stations: parse off the event loop.
         return await asyncio.to_thread(
-            parse, data or {}, location, self.attribution, dict(self._names), dict(self._elevations), b
+            parse, data or {}, location, self.attribution, dict(self._names), self._elevations(), b
         )
 
     def stations(self) -> dict[str, str]:

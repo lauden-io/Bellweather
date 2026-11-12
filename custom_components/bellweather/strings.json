@@ -281,7 +281,7 @@
           "address_server": "Nominatim server"
         },
         "data_description": {
-          "address_server": "https://nominatim.openstreetmap.org, or your own or another provider's Nominatim-compatible server (https only). Empty: no address search; place names still work, and the pin can always be placed by hand."
+          "address_server": "{default_server}, or your own or another provider's Nominatim-compatible server (https only). Empty: no address search; place names still work, and the pin can always be placed by hand."
         },
         "submit": "Back to the menu"
       }

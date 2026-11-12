@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.1 (2026-11-12)
+
+- **Fewer calls to Open-Meteo.** Open-Meteo counts every point of a request
+  as one call, against a daily limit per IP address. Its current values are
+  now asked once per quarter hour, as often as they change, so 96 calls a day
+  per location instead of 288. Station heights are asked once per station,
+  shared by every location and kept across restarts in
+  `.storage/bellweather.station_heights` (see docs/privacy.md); before, every
+  restart asked them again.
+- **Address search setting:** the default server's address is now filled in
+  by the integration, as Home Assistant's checks require. The text reads the
+  same.
+- **Brand kit:** the two misuse examples (a ground too close to cobalt, a
+  busy pattern) are redrawn so they show the problem.
+
 ## 0.1.0 (2026-11-11)
 
 The first published version.

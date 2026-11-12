@@ -476,10 +476,35 @@ def variants() -> None:
 <p class="small" style="margin-top:4mm">The open mark in colour (cobalt bell, sun vane, no badge) is a secondary form for large sizes on light grounds, 32 px and up. When in doubt, use the badge.</p>""", "02 · Logo")
 
 
+def busy_ground() -> str:
+    """A CSS background of many small, high-contrast shapes in clashing
+    colours, drawn as an SVG so it prints the same in the PDF."""
+    import random
+    from urllib.parse import quote
+
+    rng = random.Random(20261111)
+    colours = ["#1F5FD6", "#FFB31A", "#D93A3A", "#1E9E5A", "#0E1F3D", "#FFFFFF", "#8E44AD", "#F06EAA"]
+    shapes = []
+    for _ in range(170):
+        x, y, r, c = rng.uniform(0, 200), rng.uniform(0, 140), rng.uniform(3, 11), rng.choice(colours)
+        kind = rng.random()
+        if kind < 0.4:
+            shapes.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="{c}"/>')
+        elif kind < 0.75:
+            shapes.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{2 * r:.1f}" height="{r:.1f}" fill="{c}" '
+                          f'transform="rotate({rng.uniform(0, 180):.0f} {x:.1f} {y:.1f})"/>')
+        else:
+            shapes.append(f'<path d="M{x:.1f} {y:.1f}l{r:.1f} {2 * r:.1f}h{-2 * r:.1f}z" fill="{c}"/>')
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" preserveAspectRatio="xMidYMid slice">'
+           f'<rect width="200" height="140" fill="#F7E6B0"/>{"".join(shapes)}</svg>')
+    return f"url('data:image/svg+xml,{quote(svg)}') center / cover"
+
+
 def backgrounds() -> None:
     sky = "linear-gradient(165deg,#d6ebfc 0%,#a9d0f3 55%,#7fb4e8 100%)"
     night = "linear-gradient(165deg,#2a3550 0%,#1b2236 60%,#121726 100%)"
-    stripes = "repeating-linear-gradient(45deg,#2f6fe0 0 3mm,#ffc340 3mm 6mm)"
+    busy = busy_ground()
+    near_cobalt = "#4A7FE0"  # a blue close to cobalt: the badge's edge turns muddy
     add(f"""<div class="kicker">Backgrounds</div><h1>Calm grounds only</h1>
 <div class="g4">
 {good(lockup(8.5), "White", "#fff")}
@@ -488,8 +513,8 @@ def backgrounds() -> None:
 {good(lockup(8.5, text=PAPER), "Dark", DARK, "#a8a8a8")}
 {good(lockup(8.5, text=PAPER), "Night", night, "#a8b0c4")}
 {good(reversed_lockup(8.5), "Cobalt: reversed", COBALT, "#d7e3fb")}
-{bad(lockup(8.5, text=WHITE), "Badge on cobalt: it sinks", COBALT)}
-{bad(lockup(8.5), "Busy pattern", stripes)}
+{bad(lockup(8.5, text=WHITE), "Badge on a blue close to cobalt: the edge turns muddy", near_cobalt)}
+{bad(lockup(8.5), "Busy pattern: the logo gets lost", busy)}
 </div>""", "02 · Logo")
 
 

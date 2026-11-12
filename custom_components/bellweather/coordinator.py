@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -76,6 +76,7 @@ from .core.safety import (
     valid_id,
 )
 from .core.sources import DEFAULT_SOURCES, Source, make_sources
+from .core.sources.esoh import StationHeights
 
 _LOGGER = logging.getLogger(__name__)
 TIMEOUT = ClientTimeout(total=30)
@@ -90,6 +91,7 @@ class BellweatherData:
     session: ClientSession
     http: Any  # core.cache.CachingHttp around HaHttp, shared by every location
     locations: dict[str, BellweatherCoordinator]
+    heights: StationHeights = field(default_factory=StationHeights)  # shared, kept across restarts
 
 
 type BellweatherConfigEntry = ConfigEntry[BellweatherData]
@@ -182,12 +184,20 @@ def limits_from_options(raw: dict[str, Any] | None) -> dict[Group, GroupLimits]:
 class BellweatherCoordinator(DataUpdateCoordinator[dict[Field, Choice]]):
     config_entry: BellweatherConfigEntry
 
-    def __init__(self, hass: HomeAssistant, entry: BellweatherConfigEntry, subentry: ConfigSubentry, http: Any) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: BellweatherConfigEntry,
+        subentry: ConfigSubentry,
+        http: Any,
+        heights: StationHeights | None = None,
+    ) -> None:
         super().__init__(hass, _LOGGER, config_entry=entry, name=f"{DOMAIN} {subentry.title}", update_interval=UPDATE_INTERVAL)
         self.subentry = subentry
         self.subentry_id = subentry.subentry_id
         self.location_name = subentry.title
         self.http = http
+        self.heights = heights if heights is not None else StationHeights()
         self.sources: list[Source] = []
         self.status: dict[str, SourceStatus] = {}
         self.stations: dict[str, str] = {}  # id -> label, for the options
@@ -216,7 +226,7 @@ class BellweatherCoordinator(DataUpdateCoordinator[dict[Field, Choice]]):
         excluded = {valid_id(sid) for sid in settings.get(CONF_EXCLUDED_STATIONS) or []}
         self.fusion_settings = Settings(limits=limits, excluded_stations=frozenset(sid for sid in excluded if sid))
         keys = list(settings.get(CONF_SOURCES, DEFAULT_SOURCES))
-        self.sources = make_sources(keys, self.http, limits)
+        self.sources = make_sources(keys, self.http, limits, self.heights)
         self.use_met_nowcast = MET_NOWCAST in keys
         self.limits = limits
         self.status = {s.key: SourceStatus() for s in self.sources}

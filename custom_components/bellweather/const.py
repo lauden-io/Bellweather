@@ -6,7 +6,7 @@ from datetime import timedelta
 
 DOMAIN = "bellweather"
 NAME = "Bellweather"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 PROJECT_URL = "https://github.com/lauden-io/Bellweather"
 # MET Norway requires contact details in the User-Agent: an e-mail address, a
 # website, or a public repository where issues can be opened. The project's

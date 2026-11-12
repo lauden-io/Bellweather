@@ -99,7 +99,7 @@ last error and, for the radar, whether the location has radar coverage.
 | RainViewer | radar | 150+ countries, where radar exists | 10 min | no key | personal, educational and small-scale community use; "Weather data by RainViewer" |
 | EUMETNET E-SOH (MeteoGate) | official stations | Europe, about 4,000 stations from many national services | 10 min; values seen 10–40 min after measurement | no key | CC BY 4.0 |
 | NOAA Aviation Weather Center | airports (METAR) | worldwide, about 7,700 airports | 30–60 min | no key; 100 requests/min | NOAA public data |
-| Open-Meteo (ECMWF IFS) | model values, snow depth, 24-h precipitation; station heights (elevation API) | worldwide | hourly (current values every 15 min) | no key | free for non-commercial use |
+| Open-Meteo (ECMWF IFS) | model values, snow depth, 24-h precipitation; station heights (elevation API) | worldwide | hourly (current values every 15 min, asked once per quarter hour) | no key | free for non-commercial use |
 | NOAA/USNIC IMS (NSIDC G02156) | satellite snow map | Northern Hemisphere, 4 km | daily, valid 00 UTC, posted about 14 h later | no key | cite the data set; NSIDC says its servers are not for operational use |
 | Open-Meteo forecast and Previous Runs | 11 forecast models, and what they said one day earlier | worldwide | hourly forecast; verification daily | no key | free for personal home automation under 10,000 calls a day; CC BY 4.0 |
 | MET Norway Nowcast 2.0 | official radar nowcast | Nordic countries | 5 min, 2 h ahead | no key; identifying User-Agent | CC BY 4.0 |

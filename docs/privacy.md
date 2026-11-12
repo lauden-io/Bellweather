@@ -99,3 +99,8 @@ itself is the one each location would have sent anyway.
   entities, is kept in `.storage/bellweather.<location id>`, one per location, and used for the
   forecast's verification. It contains no location. Removing a location
   deletes its history; removing the integration deletes all of them.
+- **Station heights.** The ground height of each official station near your
+  locations, kept in `.storage/bellweather.station_heights` so it is asked
+  from Open-Meteo once, not after every restart. It holds public station ids,
+  their public coordinates and heights, nothing about you; removing the
+  integration deletes it.

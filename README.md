@@ -14,7 +14,7 @@ at your home, in Home Assistant.
 It is for everyone: any Home Assistant installation, anywhere in the world,
 with no account, no API key and no extra hardware.
 
-Version **0.1.0** (what is new: [CHANGELOG.md](CHANGELOG.md)).
+Version **0.1.1** (what is new: [CHANGELOG.md](CHANGELOG.md)).
 
 ## Why I built it
 

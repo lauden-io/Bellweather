@@ -547,7 +547,10 @@ class BellweatherOptionsFlow(OptionsFlow):
                 TextSelectorConfig(type=TextSelectorType.URL)
             ),
         })
-        return self.async_show_form(step_id="search", data_schema=schema, errors=errors)
+        return self.async_show_form(
+            step_id="search", data_schema=schema, errors=errors,
+            description_placeholders={"default_server": ADDRESS_SERVER},
+        )
 
     async def async_step_privacy(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:

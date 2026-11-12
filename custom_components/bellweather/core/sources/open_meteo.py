@@ -79,21 +79,40 @@ def parse(data: dict, now: datetime) -> list[Reading]:
     return out
 
 
+def quarter_hour(now: datetime) -> datetime:
+    """The quarter hour `now` falls in."""
+    return now.replace(minute=now.minute - now.minute % 15, second=0, microsecond=0)
+
+
 class OpenMeteoSource(Source):
+    """Open-Meteo's current values change every 15 minutes, so they are asked
+    once per quarter hour, at the first update after it begins; the updates in
+    between reuse that answer. Open-Meteo counts every request against a daily
+    limit per IP address, shared by everything in the home that uses it."""
+
     key = "open_meteo"
     kind = Kind.MODEL
     attribution = ATTRIBUTION
     sends = "the shared point"
 
+    def __init__(self) -> None:
+        self._asked: tuple[datetime, tuple[float, float]] | None = None
+        self._readings: list[Reading] = []
+
     async def fetch(self, http: Http, location: Location, precision: Precision, now: datetime) -> list[Reading]:
         lat, lon = shared_point(location, precision)
+        asked = (quarter_hour(now), (lat, lon))
+        if self._asked == asked:
+            return list(self._readings)
         data = await http.get_json(URL, {
             "latitude": f"{lat:.4f}", "longitude": f"{lon:.4f}",
             "current": ",".join(CURRENT),
             "hourly": "precipitation", "past_hours": "24", "forecast_hours": "1",
             "models": MODEL, "timezone": "GMT",
         }, limit=CAP_SMALL_JSON)
-        return parse(data or {}, now)
+        readings = parse(data or {}, now)
+        self._asked, self._readings = asked, readings
+        return list(readings)
 
 
 async def elevations(http: Http, points: list[tuple[float, float]]) -> list[float | None]:

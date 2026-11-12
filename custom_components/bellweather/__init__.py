@@ -25,6 +25,14 @@ from .forecast_coordinator import STORAGE_VERSION, ForecastCoordinator
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.WEATHER]
 FIRST_FORECAST_STAGGER = 15.0  # seconds between the locations' first forecasts
+HEIGHTS_STORAGE_VERSION = 1
+HEIGHTS_SAVE_DELAY = 60.0  # seconds
+
+
+def _heights_store(hass: HomeAssistant) -> Store:
+    """Station heights: public station ids and ground heights, nothing about
+    this installation."""
+    return Store(hass, HEIGHTS_STORAGE_VERSION, f"{DOMAIN}.station_heights")
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BellweatherConfigEntry) -> bool:
@@ -32,10 +40,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: BellweatherConfigEntry) 
     # recognise this installation across IP address changes.
     session = async_create_clientsession(hass, cookie_jar=DummyCookieJar())
     data = BellweatherData(session=session, http=CachingHttp(HaHttp(session)), locations={})
+    heights_store = _heights_store(hass)
+    try:
+        data.heights.load(await heights_store.async_load())
+    except Exception:  # noqa: BLE001 - a damaged store only means the heights are asked again
+        pass
     for sub in entry.subentries.values():
         if sub.subentry_type != SUBENTRY_LOCATION:
             continue
-        coordinator = BellweatherCoordinator(hass, entry, sub, data.http)
+        coordinator = BellweatherCoordinator(hass, entry, sub, data.http, data.heights)
         forecast = ForecastCoordinator(hass, entry, coordinator)
         coordinator.forecast = forecast
         await forecast.async_load()
@@ -44,6 +57,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: BellweatherConfigEntry) 
     # Created during setup, the session is detached by Home Assistant when the
     # entry unloads (or setup fails); it must not be closed by hand.
     await asyncio.gather(*(c.async_config_entry_first_refresh() for c in data.locations.values()))
+
+    def _save_heights() -> None:
+        if data.heights.changed:
+            data.heights.changed = False
+            heights_store.async_delay_save(data.heights.dump, HEIGHTS_SAVE_DELAY)
+
+    _save_heights()
+    for coordinator in data.locations.values():
+        entry.async_on_unload(coordinator.async_add_listener(_save_heights))
     entry.async_on_unload(entry.add_update_listener(_entry_updated))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # The forecast must not hold the observations back: it starts in the
@@ -69,6 +91,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: BellweatherConfigEntry)
         # A location that was just removed keeps no history.
         if sid in entry.subentries and coordinator.forecast is not None:
             await coordinator.forecast.store.async_save(coordinator.forecast.engine.dump())
+    await _heights_store(hass).async_save(data.heights.dump())
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
@@ -76,6 +99,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: BellweatherConfigEntry)
     """Delete every location's stored forecast history with the entry."""
     for sid in entry.subentries:
         await Store(hass, STORAGE_VERSION, f"{DOMAIN}.{sid}").async_remove()
+    await _heights_store(hass).async_remove()
 
 
 async def _entry_updated(hass: HomeAssistant, entry: BellweatherConfigEntry) -> None:
