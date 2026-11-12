@@ -7,19 +7,26 @@ on:
     - cron: "0 3 * * 1"
   workflow_dispatch:
 
+# Every job only reads the repository.
+permissions:
+  contents: read
+
+# Third-party actions are pinned to a full commit hash, so a changed branch
+# cannot change what runs here. To update one, take the newer commit of the
+# branch named in the comment and test it.
 jobs:
   hassfest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: home-assistant/actions/hassfest@master
+      - uses: home-assistant/actions/hassfest@86d4564712fa02543c808e3a693dd04f9d3f8361 # master, 2026-10-26
 
   hacs:
     # The HACS action validates public repositories only.
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     steps:
-      - uses: hacs/action@main
+      - uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main, 2026-06-08
         with:
           category: integration
 

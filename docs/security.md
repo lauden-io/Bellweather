@@ -236,6 +236,11 @@ fixed too, with tests in `tests/test_rereview_fixes.py`.
   codes, and error texts containing coordinates.
 - I test against real Home Assistant without lowering its protections. For
   example, the SSH add-on stays in protection mode.
+- Every change is checked on GitHub: Home Assistant's hassfest, the HACS
+  check, all the tests, and CodeQL code scanning with its extended security
+  queries, for the Python code and for the workflows. The workflow's token
+  can only read the repository, and third-party actions are pinned to a full
+  commit hash, so a changed branch cannot change what runs.
 
 ## Reporting a vulnerability
 
