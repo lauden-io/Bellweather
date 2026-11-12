@@ -4,3 +4,8 @@
 *.zip binary
 *.ico binary
 *.ase binary
+
+# GitHub's language statistics count only the code. The brand pages are
+# built by the scripts next to them, and the design pages are mockups.
+branding/**/*.html linguist-generated
+design/**/*.html linguist-documentation
