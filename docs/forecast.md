@@ -16,6 +16,7 @@ thing for decades.
 |---|---|---|
 | Forecast | 11 models from Open-Meteo, blended per hour | A blend beat every single model, ECMWF included, at all 6 airports I tested |
 | Correction | Each model's bias over the last 30 days is removed, and models are weighted by 1 / error variance | It cut temperature error by 7–31 % and wind error by 11–28 % against ECMWF alone |
+| Learned elsewhere | Where a station or airport measured the hour instead of your own sensor: half of the bias for temperature and dew point, a quarter for wind, all of it for pressure | An airport's error is partly its own; removing all of it made wind 6 % worse at a place nearby, while pressure gained 32 % |
 | Precipitation | An hour is wet when at least half of the models say ≥ 0.1 mm | That rule had the best hit rate at 4 of 6 airports |
 | Safety net | No correction until 20 of the last 30 days have data | With 3–4 days, correcting made things worse in my test |
 | Next two hours | Radar nowcast: the latest radar frames moved forward, or an official nowcast where one exists | Radar extrapolation beats models in the first one to a few hours |
@@ -113,10 +114,66 @@ Day-1 run, 90 days to 9 November 2026, each test day scored only with the
 The correction lowered the dew point error at 9 of 10 airports (by 1–15 %)
 and the pressure error at 9 of 10 (by 5–51 %); it was slightly worse at
 Dubai for dew point and at Chicago for pressure. Part of the pressure gain
-is a steady difference the correction learns: outside North America the
-airports give QNH, which differs a little from sea-level pressure, more so
-high up (Madrid, 610 m). At home Bellweather scores against what it
-measures there, so it learns that home's own difference the same way.
+was a steady difference rather than a forecast error: outside North
+America most airports report QNH, which is not sea-level pressure, more so
+high up (Madrid, 610 m), and the correction learned the difference. Since
+2026-11-16 QNH is converted to sea-level pressure before anything is
+learned from it (see the next section).
+
+### Corrections learned elsewhere
+
+The tables above learn and test at the same airport. A home is rarely an
+airport: Bellweather learns each model's error where it has measurements,
+which is your own sensor, an official station or airport within the
+limits, or the airport archive, often several kilometres away. The
+benchmark's first days showed what that costs: at New York the correction
+was learned at LaGuardia, on the water, and scored in Central Park, and it
+made the temperature worse there (docs/benchmark.md). So I measured how
+much of an error learned at one place carries over to another.
+
+Method: the benchmark's addresses whose scoring station is an airport and
+which have an archive airport 6 to 57 km away; at 9 of 12 pairs the archive
+had enough history. Day-1 run, 90 days to 15 November 2026, each day scored
+at the scoring station with what was learned in the 30 days before it.
+Airports that report only QNH are converted with their height and
+temperature. Script: `tools/evaluate_transfer.py`.
+
+Mean absolute error over the hours with the archive airport's corrections
+in force (9 pairs, about 18,800 hours):
+
+| Removed from each model's error | Temperature | Dew point | Wind | Pressure |
+|---|---|---|---|---|
+| nothing (plain mean) | 1.127 °C | 1.194 °C | 4.220 km/h | 1.093 hPa |
+| the airport's: none, weights only | 1.118 | 1.180 | 4.232 | 1.154 |
+| a quarter | 1.105 | 1.147 | **4.187** | 1.022 |
+| half | **1.101** | **1.132** | 4.219 | 0.906 |
+| three quarters | 1.104 | 1.136 | 4.319 | 0.810 |
+| all of it (until version 0.1.1) | 1.115 | 1.158 | 4.482 | **0.739** |
+| learned at the scoring station itself | 1.038 | 1.024 | 3.586 | 0.550 |
+
+- **Temperature, dew point and wind depend on the site.** An airport is an
+  open field, often by the sea; a station may stand in a park or between
+  houses. Removing the airport's whole error made wind 6 % worse than the
+  plain mean, and doubled the wind error at New York (4.3 to 8.3 km/h) and
+  Casablanca (2.3 to 4.5 km/h). Half of it is best for temperature and dew
+  point, a quarter for wind.
+- **Pressure is the same over tens of kilometres**, so a model's pressure
+  error at the airport is its error at the home too: removing all of it is
+  best, 32 % below the plain mean.
+- **Learned where it is scored, the correction is far better** for every
+  value: 8 % for temperature, 14 % for dew point, 15 % for wind. That is
+  what a sensor at the home gives, if it measures the air and not a warm
+  wall.
+
+So since version 0.1.2 Bellweather removes a model's error in full where
+your own sensor measured the hour, and only if you say the sensor is placed
+like a weather station's (shaded, ventilated, 1.5 to 2 m above open ground,
+away from walls). Hours measured elsewhere remove half of it for
+temperature and dew point, a quarter for wind and all of it for pressure.
+The weights stay as they were. An own sensor not marked that way still
+shows the weather now, but the forecast learns from the best station or
+airport instead, as if the sensor were not there. A barometer always
+counts.
 
 ### What it taught me
 
@@ -188,7 +245,15 @@ a day.
   archived since January 2024 for most models). Bellweather fetches the
   last 65 days of that for your point.
 - It compares those forecasts with what was measured at your place:
-  Bellweather's own values, logged every hour.
+  Bellweather's own values, logged every hour, each marked with where it
+  was measured (your own sensor, or a station or airport nearby). Your
+  own temperature, humidity and wind sensors count only if you say they
+  are placed like a weather station's; otherwise the best station's or
+  airport's value is logged in their place. Your own barometer always
+  counts: where it hangs does not change the pressure.
+- Your own values and the airport archive are joined per hour and per
+  value: an hour with only your wind still takes the archive's
+  temperature.
 - **Values that came from a model are never used as truth.** Scoring
   models against a model would only measure agreement.
 - Optional: the airport's archive (see below) fills the first 60 days.
@@ -198,7 +263,10 @@ a day.
 For temperature and wind speed, per member, over the last 30 days:
 
 - **bias**: the average error. A model that is always 1.5 °C too warm in
-  your valley gets 1.5 °C taken off;
+  your valley gets 1.5 °C taken off, if your own sensor measured it; where
+  a station or airport measured it, half of it for temperature and dew
+  point, a quarter for wind and all of it for pressure ("Corrections
+  learned elsewhere" above);
 - **weight**: 1 / the variance of the remaining error. A model that misses
   by a steady amount is easy to correct; one that scatters wildly counts
   less.
@@ -291,7 +359,10 @@ hour later.
   says roughly where you live. That is no more than the airport query
   already says, but it goes to one more party.
 - **What it buys:** in my test, correction against plain averaging improved
-  temperature error by −1 % to +17 %, depending on the place.
+  temperature error by −1 % to +17 %, depending on the place, measured at
+  the airport itself. At a home some kilometres away about half of that
+  carries over for temperature, more for pressure ("Corrections learned
+  elsewhere" above).
 - **Which airport:** the nearest one within the temperature limits (default
   40 km and 150 m height difference), so that its weather is a fair stand-in
   for yours.
@@ -392,6 +463,15 @@ everyone.
   empty.
 - The correction learned for day 1 is applied to all lead times; I have not
   verified it beyond day 1.
+- High up, sea-level pressure is partly a convention: at Medellín
+  (1,491 m) the models' value and the airport's, converted from QNH, still
+  differed by 4.3 hPa on average. The correction learns such a steady
+  difference; two airports 640 m apart there agreed within 0.7 hPa once
+  converted (16 November 2026).
+- The shares for corrections learned elsewhere come from 9 pairs of places
+  over one autumn. Between a quarter and three quarters the differences
+  are small; that the whole error does not carry over for temperature and
+  wind, and does for pressure, is clear.
 - The probability is model agreement, not calibrated.
 - Rounding the location (default 10 km) means the forecast answers for a
   point up to 7 km away. Near hills or coasts, choose 1–5 km if that matters

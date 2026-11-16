@@ -69,7 +69,7 @@ def load(data: Path):
     for s in json.load(gzip.open(data / "stations.cache.json.gz")):
         if s.get("icaoId") and "METAR" in (s.get("siteType") or []):
             stations.append({"kind": "metar", "id": s["icaoId"], "name": s.get("site") or s["icaoId"],
-                             "lat": float(s["lat"]), "lon": float(s["lon"])})
+                             "lat": float(s["lat"]), "lon": float(s["lon"]), "elev": s.get("elev")})
     esoh = json.loads((data / "esoh_locations.json").read_text(encoding="utf-8"))
     for f in esoh.get("features", []):
         params = f.get("properties", {}).get("parameter-name") or []
@@ -167,6 +167,7 @@ def main() -> None:
                 "id": f"{cont.lower()}{kept}", "continent": cont, "town": name, "country": cc, "town_population": pop,
                 "latitude": round(lat, 4), "longitude": round(lon, 4), "elevation_m": round(h_addr),
                 "truth": {"kind": st["kind"], "id": st["id"], "name": st["name"], "latitude": st["lat"], "longitude": st["lon"],
+                          **({"elevation_m": st["elev"]} if st.get("elev") is not None else {}),  # official, for QNH
                           "distance_km": round(d, 2), "height_difference_m": round(h_st - h_addr), "hours_last_24": hours},
                 "mosmix": {"id": mos[0], "distance_km": round(km(lat, lon, mos[1], mos[2]), 1)},
                 "draw": tries,

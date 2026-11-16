@@ -9,6 +9,16 @@ The method is the one I measured at six airports over 90 days
   continents, 90 days: lower error than the plain mean at 9 of 10 for each,
   see docs/forecast.md);
 - the blend removes each model's bias and weights the models by 1 / MSE;
+- the bias is removed in full for hours measured at the home itself (your
+  own sensor, placed like a weather station's). Where the hour was measured
+  somewhere else, an airport or a station nearby, only a share of it is
+  removed for temperature, dew point and wind (ELSEWHERE_SHARE): a model's
+  error there is partly the place's own (an open field, the sea next to it)
+  and does not carry over to the home. Pressure is the same over tens of
+  kilometres, so its error carries over in full. Measured out of sample at
+  9 pairs of airports and stations, 90 days: removing the airport's bias in
+  full helped temperature by 1 % and made wind 6 % worse, but helped
+  pressure by 32 %; the shares below did best (docs/forecast.md);
 - it does so only when at least 20 of those 30 days have data. With 3 to 4
   days, correcting made the forecast worse in my test, so until then every
   model counts the same and nothing is corrected;
@@ -29,6 +39,9 @@ from datetime import date, datetime, timedelta
 
 WINDOW_DAYS = 30
 MIN_DAYS = 20
+# Share of a model's bias removed when the hours were measured somewhere
+# other than the home (docs/forecast.md, "Corrections learned elsewhere").
+ELSEWHERE_SHARE = {"t": 0.5, "d": 0.5, "w": 0.25, "pr": 1.0}
 WET_MM = 0.1
 WET_SHARE = 0.5
 
@@ -44,6 +57,11 @@ class MemberStats:
     mse: float
     mae: float
     hours: int
+    shift: float | None = None  # the bias the blend removes; None: all of it
+
+    @property
+    def removed(self) -> float:
+        return self.bias if self.shift is None else self.shift
 
 
 @dataclass
@@ -80,13 +98,16 @@ def member_stats(obs: Observations, prev: Previous, var: str, end: datetime, win
     pairs = _pairs(obs, prev, var, start, end)
     stats: dict[str, MemberStats] = {}
     days: set[date] = set()
+    elsewhere = ELSEWHERE_SHARE.get(var, 1.0)
     for member, rows in pairs.items():
         if not rows:
             continue
         errors = [f - o for _, f, o in rows]
+        shares = [1.0 if obs[t].get(f"{var}_own") is True else elsewhere for t, _, _ in rows]
         stats[member] = MemberStats(
             bias=statistics.fmean(errors), mse=statistics.fmean(e * e for e in errors),
             mae=statistics.fmean(abs(e) for e in errors), hours=len(rows),
+            shift=statistics.fmean(s * e for s, e in zip(shares, errors)),
         )
         days |= {t.date() for t, _, _ in rows}
     return stats, len(days)
@@ -109,7 +130,9 @@ def corrections(obs: Observations, prev: Previous, end: datetime, source: str | 
 def combine(values: dict[str, float], stats: dict[str, MemberStats]) -> float | None:
     """Bias-corrected, 1/MSE-weighted mean. Members without stats (new, or
     a weather entity still collecting) count with the average weight and no
-    correction; with no stats at all it is the plain mean."""
+    correction; with no stats at all it is the plain mean. The bias removed
+    is `MemberStats.removed`: all of it, or its share for hours measured
+    elsewhere; the weight comes from the error's spread either way."""
     if not values:
         return None
     if not stats:
@@ -124,7 +147,7 @@ def combine(values: dict[str, float], stats: dict[str, MemberStats]) -> float | 
     for member, value in values.items():
         s = stats.get(member)
         w = weights.get(member, average)
-        num += w * (value - (s.bias if s else 0.0))
+        num += w * (value - (s.removed if s else 0.0))
         total += w
     return num / total if total else None
 

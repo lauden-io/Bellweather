@@ -17,6 +17,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 
+from core.derive import sea_level_pressure
+
 NEAR_HOUR = timedelta(minutes=20)
 LEADS = {"next hours": (1, 5), "day 1": (24, 28), "day 2": (48, 52), "day 3": (72, 76)}
 DAILY_LEAD_MIN = timedelta(hours=6)  # daily max/min: the latest capture at least 6 h before the local day starts
@@ -26,6 +28,11 @@ BLOCK = 3  # hours: wet scores are on 3-hour blocks (00, 03, ... UTC), the step 
 _WET = re.compile(r"(DZ|RA|SN|SG|PL|GR|GS|UP)")
 PROVIDERS = ["bellweather", "control", "met_norway", "openweather", "open_meteo", "dwd_mosmix", "ecmwf_ifs"]
 DWD_MAX_KM = 25.0
+# Pressure is scored only on captures made with sea-level pressure from QNH
+# converted (2026-11): before, airports that report only QNH were taken as
+# they are, as truth and in Bellweather's own correction. The runner marks
+# every capture with the method it used (runner.METHOD).
+PRESSURE_METHOD = "pressure-qnh-converted"
 
 
 def parse_time(text: str) -> datetime:
@@ -70,8 +77,15 @@ def _esoh_value(var: str, v: float) -> float | None:
     return None
 
 
-def truth(con: sqlite3.Connection, station: str, kind: str) -> tuple[dict[datetime, dict[str, float]], dict[datetime, bool]]:
-    """Hourly values {hour: {t, d, w, p}} and wet hours {hour starting at key: bool}."""
+def truth(con: sqlite3.Connection, station: str, kind: str,
+          elevation: float | None = None) -> tuple[dict[datetime, dict[str, float]], dict[datetime, bool]]:
+    """Hourly values {hour: {t, d, w, p}} and wet hours {hour starting at key: bool}.
+
+    Pressure is sea-level pressure, what every forecast gives. An airport
+    without it in its report gives QNH, which differs by several hPa at high
+    or cold airports: it is converted with the airport's official height
+    (`elevation`, else the one in the report) and the mean of its
+    temperature now and 12 hours earlier (core.derive.sea_level_pressure)."""
     best: dict[tuple[datetime, str], tuple[float, float]] = {}  # (hour, var) -> (gap, value)
     wet: dict[datetime, bool] = {}
     rows = con.execute("SELECT time, var, value FROM observation WHERE station = ?", (station,)).fetchall()
@@ -79,9 +93,19 @@ def truth(con: sqlite3.Connection, station: str, kind: str) -> tuple[dict[dateti
         by_time: dict[datetime, dict[str, object]] = defaultdict(dict)
         for t, var, value in rows:
             by_time[parse_time(t)][var] = value
+        temps: dict[datetime, tuple[float, float]] = {}  # full hour -> (gap, temperature)
         for t, values in by_time.items():
             h, gap = full_hour(t), abs((t - full_hour(t)).total_seconds())
-            pressure = values.get("slp") if isinstance(values.get("slp"), (int, float)) else values.get("qnh")
+            if isinstance(values.get("t"), (int, float)) and gap <= NEAR_HOUR.total_seconds() and gap < temps.get(h, (1e9, 0))[0]:
+                temps[h] = (gap, float(values["t"]))
+        for t, values in by_time.items():
+            h, gap = full_hour(t), abs((t - full_hour(t)).total_seconds())
+            pressure = values.get("slp") if isinstance(values.get("slp"), (int, float)) else None
+            qnh, temp = values.get("qnh"), values.get("t")
+            height = elevation if elevation is not None else values.get("elev")
+            if pressure is None and all(isinstance(v, (int, float)) for v in (qnh, temp, height)):
+                earlier = temps.get(h - timedelta(hours=12))
+                pressure = sea_level_pressure(float(qnh), float(height), float(temp), earlier[1] if earlier else None)
             for var, v in (("t", values.get("t")), ("d", values.get("d")), ("w", values.get("w")), ("p", pressure)):
                 if isinstance(v, (int, float)) and gap <= NEAR_HOUR.total_seconds() and gap < best.get((h, var), (1e9, 0))[0]:
                     if var == "p" and not 850 <= v <= 1090:
@@ -127,12 +151,26 @@ def truth(con: sqlite3.Connection, station: str, kind: str) -> tuple[dict[dateti
 
 # --- forecasts --------------------------------------------------------------------------
 
-def forecasts(con: sqlite3.Connection, point: str) -> dict[tuple[str, str, datetime], list[tuple[datetime, float]]]:
-    """(provider, var, target) -> [(capture, value)], sorted by capture."""
+def pressure_from(con: sqlite3.Connection) -> datetime | None:
+    """The first capture made with QNH converted; None: none yet."""
+    try:
+        row = con.execute("SELECT MIN(time) FROM run WHERE kind = 'method' AND status = ?", (PRESSURE_METHOD,)).fetchone()
+    except sqlite3.OperationalError:  # no run table: nothing marked
+        return None
+    return parse_time(row[0]) if row and row[0] else None
+
+
+def forecasts(con: sqlite3.Connection, point: str, pressure_since: datetime | None = None,
+              ) -> dict[tuple[str, str, datetime], list[tuple[datetime, float]]]:
+    """(provider, var, target) -> [(capture, value)], sorted by capture.
+    Pressure only from captures at or after `pressure_since` (none if None)."""
     out: dict[tuple[str, str, datetime], list[tuple[datetime, float]]] = defaultdict(list)
     for capture, provider, target, var, value in con.execute(
             "SELECT capture, provider, target, var, value FROM forecast WHERE point = ?", (point,)):
-        out[(provider, var, parse_time(target))].append((parse_time(capture), float(value)))
+        when = parse_time(capture)
+        if var == "p" and (pressure_since is None or when < pressure_since):
+            continue
+        out[(provider, var, parse_time(target))].append((when, float(value)))
     for rows in out.values():
         rows.sort()
     return out
@@ -175,6 +213,7 @@ class Result:
     daily_min: Errors = field(default_factory=Errors)
     days: int = 0
     by_group: dict[str, Errors] = field(default_factory=lambda: defaultdict(Errors))  # group -> temperature day 1
+    pressure_from: datetime | None = None  # first capture with QNH converted
 
 
 def eligible(point: dict, provider: str, present: set[str]) -> bool:
@@ -191,8 +230,9 @@ def score(con: sqlite3.Connection, points: list[dict], start: datetime, end: dat
     point counts only if all of them are eligible there."""
     res = Result(providers=providers)
     hour_counts: dict[str, int] = defaultdict(int)
+    res.pressure_from = pressure_from(con)
     for point in points:
-        fc = forecasts(con, point["id"])
+        fc = forecasts(con, point["id"], res.pressure_from)
         present = {k[0] for k in fc}
         if not all(eligible(point, p, present) for p in providers):
             continue
@@ -201,7 +241,7 @@ def score(con: sqlite3.Connection, points: list[dict], start: datetime, end: dat
             if var == "t" and pp in temps_by_capture:
                 for c, v in rows:
                     temps_by_capture[pp][c][h] = v
-        hourly, wet = truth(con, point["truth"]["id"], point["truth"]["kind"])
+        hourly, wet = truth(con, point["truth"]["id"], point["truth"]["kind"], point["truth"].get("elevation_m"))
         # hourly values
         for lead, (lo, hi) in LEADS.items():
             for h in sorted(hourly):

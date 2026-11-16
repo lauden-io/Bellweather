@@ -11,6 +11,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "custom_components" / "bellweather"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmark" / "app"))
 
 import report  # noqa: E402
@@ -91,6 +92,46 @@ class BenchmarkScoreTests(unittest.TestCase):
         hourly, wet = score.truth(con, "0-246-0-100949", "esoh")
         self.assertAlmostEqual(hourly[h]["t"], truth_t(h), places=6)  # kelvin converted
         self.assertTrue(wet[datetime(2026, 11, 12, 12, tzinfo=timezone.utc)])  # the hourly sum belongs to the hour before its stamp
+
+    def test_qnh_only_airport_scores_sea_level_pressure(self):
+        """An airport without sea-level pressure in its report: QNH converted
+        with its official height and 12 hours of temperature, never QNH as it is."""
+        from core.derive import sea_level_pressure
+        con = sqlite3.connect(":memory:")
+        self.addCleanup(con.close)
+        con.execute("CREATE TABLE observation (station TEXT, time TEXT, var TEXT, value REAL)")
+        rows = [("SKMD", "2026-11-12T00:00:00Z", "t", 16.0), ("SKMD", "2026-11-12T00:00:00Z", "qnh", 1019.0),
+                ("SKMD", "2026-11-12T12:00:00Z", "t", 26.0), ("SKMD", "2026-11-12T12:00:00Z", "qnh", 1019.0),
+                ("KNYC", "2026-11-12T12:00:00Z", "t", 10.0), ("KNYC", "2026-11-12T12:00:00Z", "qnh", 1020.0),
+                ("KNYC", "2026-11-12T12:00:00Z", "slp", 1019.6)]
+        con.executemany("INSERT INTO observation VALUES (?,?,?,?)", rows)
+        noon = datetime(2026, 11, 12, 12, tzinfo=timezone.utc)
+        hourly, _ = score.truth(con, "SKMD", "metar", 1491)
+        self.assertAlmostEqual(hourly[noon]["p"], sea_level_pressure(1019.0, 1491.0, 26.0, 16.0))
+        self.assertLess(hourly[noon]["p"], 1010.0)  # QNH would have been 1019
+        hourly, _ = score.truth(con, "SKMD", "metar")  # no height known: no pressure
+        self.assertNotIn("p", hourly[noon])
+        hourly, _ = score.truth(con, "KNYC", "metar", 33)
+        self.assertEqual(hourly[noon]["p"], 1019.6)  # sea-level pressure from the report wins
+
+    def test_pressure_counts_only_from_captures_with_qnh_converted(self):
+        con = sqlite3.connect(":memory:")
+        self.addCleanup(con.close)
+        con.executescript("""
+            CREATE TABLE forecast (capture TEXT, point TEXT, provider TEXT, target TEXT, var TEXT, value REAL);
+            CREATE TABLE run (time TEXT, kind TEXT, point TEXT, provider TEXT, status TEXT);""")
+        rows = [(c, "na2", "control", "2026-11-17T12:00:00Z", var, 1.0)
+                for c in ("2026-11-16T07:00:00Z", "2026-11-16T11:00:00Z") for var in ("p", "t")]
+        con.executemany("INSERT INTO forecast VALUES (?,?,?,?,?,?)", rows)
+        self.assertIsNone(score.pressure_from(con))
+        fc = score.forecasts(con, "na2", score.pressure_from(con))
+        self.assertEqual({k[1] for k in fc}, {"t"})  # no capture marked yet: no pressure at all
+        con.execute("INSERT INTO run VALUES ('2026-11-16T11:00:00Z', 'method', '', '', ?)", (score.PRESSURE_METHOD,))
+        since = score.pressure_from(con)
+        target = datetime(2026, 11, 17, 12, tzinfo=timezone.utc)
+        fc = score.forecasts(con, "na2", since)
+        self.assertEqual([c for c, _ in fc[("control", "p", target)]], [since])  # the 07:00 capture is left out
+        self.assertEqual(len(fc[("control", "t", target)]), 2)  # other values keep every capture
 
     def test_scores_are_the_known_offsets_and_dwd_counts_only_near_its_point(self):
         con = sqlite3.connect(self.db)

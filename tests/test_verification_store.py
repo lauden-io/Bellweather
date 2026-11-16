@@ -65,9 +65,11 @@ class StoredVerificationTests(unittest.TestCase):
 
     def test_damaged_stats_are_dropped(self):
         out = eng.verification_out(_verification(NOW - timedelta(hours=1)), self.key)
-        out["temperature_stats"] = {"a": [1, -2, 1, 5], "b": ["x", 1, 1, 1], "c": [0.1, 0.2, 0.3, 10], "d": "junk"}
+        out["temperature_stats"] = {"a": [1, -2, 1, 5, 1], "b": ["x", 1, 1, 1, 1], "c": [0.1, 0.2, 0.3, 10, 0.05], "d": "junk",
+                                    "e": [0.1, 0.2, 0.3, 10]}  # e: the old form without the removed bias
         back = eng.verification_in(out, self.key, NOW)
         self.assertEqual(set(back.corrections.temperature), {"c"})
+        self.assertEqual(back.corrections.temperature["c"].removed, 0.05)
 
     def test_engine_stores_and_restores_it(self):
         e = eng.ForecastEngine()

@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.1.2 (2026-11-16)
+
+- **Corrections learned elsewhere count only in part.** Bellweather learns
+  each model's error where it has measurements, often an airport or a
+  station some kilometres from the home. Measured at 9 pairs of places over
+  90 days, removing that whole error helped temperature by only 1 % and
+  made wind 6 % worse, because an airport's weather is partly its own (an
+  open field, the sea next to it). Now hours measured elsewhere remove half
+  of a model's error for temperature and dew point, a quarter for wind, and
+  all of it for pressure, which is the same over tens of kilometres
+  (32 % better). Measured at the home itself the correction is far better
+  (8 to 15 %), so your own sensors still remove it in full.
+- **Your own sensors teach the forecast only when you say so.** A new
+  switch in "Your own sensors": the sensors are placed like a weather
+  station's (shaded, ventilated, 1.5 to 2 m above open ground, away from
+  walls). Off by default: a sensor by a warm wall would teach the forecast
+  the wall's warmth. Off, your sensors still show the weather now, and the
+  forecast learns from the best station or airport instead; your own
+  barometer always counts. Values logged before this version that may
+  have come from such a sensor are forgotten once, as the log did not say
+  which hours were yours.
+- Your own values and the airport archive are joined per value, not per
+  hour, so an hour with only your wind still takes the archive's
+  temperature.
+- **Pressure from airports that report only QNH** is now converted to
+  sea-level pressure with the airport's height and its temperature now and
+  12 hours earlier. QNH as it is differed from the models' sea-level
+  pressure by 6.6 hPa on average at Medellín (1,491 m), and the correction
+  learned that difference instead of the models' error. Without a known
+  height the pressure is left out rather than taken as it is.
+- The stored corrections are rebuilt once after the update.
+- **Benchmark:** pressure is scored as sea-level pressure everywhere, from
+  the first capture made with the conversion (docs/benchmark.md, Changes).
+  The script of the new measurement is `tools/evaluate_transfer.py`.
+
 ## 0.1.1 (2026-11-12)
 
 - **Fewer calls to Open-Meteo.** Open-Meteo counts every point of a request

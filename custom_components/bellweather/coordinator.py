@@ -39,6 +39,7 @@ from .const import (
     CONF_LIMITS,
     CONF_LOCAL_HUMIDITY,
     CONF_LOCAL_PRESSURE,
+    CONF_LOCAL_SITED,
     CONF_LOCAL_RAIN_RATE,
     CONF_LOCAL_RAIN_STATE,
     CONF_LOCAL_SNOW_DEPTH,
@@ -58,6 +59,7 @@ from .const import (
 )
 from .core.derive import dew_point_from_humidity
 from .core.forecast.engine import Airport, ForecastEngine
+from .core.forecast.history import choices_for_log
 from .core.forecast.met_nowcast import MetNowcast
 from .core.nowcast import Nowcast
 from .core.fusion import DEFAULT_LIMITS, Choice, Group, GroupLimits, Settings, fuse
@@ -282,7 +284,11 @@ class BellweatherCoordinator(DataUpdateCoordinator[dict[Field, Choice]]):
         result = fuse(readings, self.location, now, self.fusion_settings, self.last_precip)
         self.last_precip = result.get(Field.LAST_PRECIP, self.last_precip)
         if self.engine is not None:
-            self.engine.log.add(result, now)
+            sited = self.settings.get(CONF_LOCAL_SITED) is True
+            logged = choices_for_log(
+                readings, result, sited, lambda rest: fuse(rest, self.location, now, self.fusion_settings, self.last_precip)
+            )
+            self.engine.log.add(logged, now, own_sited=sited)
         await self._update_nowcast(now)
         return result
 

@@ -38,12 +38,16 @@ from core.privacy import Precision  # noqa: E402
 from core.sources import make_sources  # noqa: E402
 from core.safety import MAX_IMAGE_BYTES, MAX_JSON_BYTES, MAX_TEXT_BYTES, HttpStatusError, UnsafeResponse, check_url  # noqa: E402
 
-VERSION = "0.2.3"
+VERSION = "0.2.4"
 DATA = Path(os.environ.get("BENCH_DATA") or ("/data" if Path("/data").exists() else str(APP / "data")))
 START = datetime(2026, 11, 10, 23, 0, tzinfo=timezone.utc)  # 2026-11-11 00:00 Central European Time
 CAPTURE_HOURS = {23, 3, 7, 11, 15, 19}  # every 4 hours from the start
 OBS_MINUTE = 15  # the scoring stations' reports are recorded every hour at :15
 HORIZON = timedelta(hours=96)
+# Recorded with every capture, so the scores know which method made it
+# (score.PRESSURE_METHOD): sea-level pressure from QNH converted, and
+# Bellweather removing only a share of the bias learned elsewhere.
+METHOD = "pressure-qnh-converted"
 SHARE = Path("/share/bellweather_benchmark") if Path("/share").exists() else DATA / "share"
 REPORTS = [7, 14, 30, 91, 182, 365]  # days after the start
 REPORT_DELAY = timedelta(hours=6)  # the last day's reports are in by then
@@ -324,6 +328,7 @@ PROVIDERS = {"open_meteo": open_meteo, "met_norway": met_norway, "openweather": 
 
 async def capture(con, points, slot: datetime) -> None:
     log.info("capture %s: %d addresses", iso(slot), len(points))
+    con.execute("INSERT INTO run VALUES (?,?,?,?,?)", (iso(slot), "method", "", "", METHOD))
     for point in points:
         engine = engine_for(point)
         try:
@@ -405,7 +410,7 @@ async def record_observations(con, points, now: datetime) -> None:
             if not sid or not t:
                 continue
             when = datetime.fromisoformat(str(t).replace("Z", "+00:00")) if isinstance(t, str) else datetime.fromtimestamp(int(t), tz=timezone.utc)
-            for key, var, f in (("temp", "t", 1), ("dewp", "d", 1), ("wspd", "w", 1.852), ("slp", "slp", 1), ("altim", "qnh", 1)):
+            for key, var, f in (("temp", "t", 1), ("dewp", "d", 1), ("wspd", "w", 1.852), ("slp", "slp", 1), ("altim", "qnh", 1), ("elev", "elev", 1)):
                 v = m.get(key)
                 if isinstance(v, (int, float)):
                     con.execute("INSERT OR REPLACE INTO observation VALUES (?,?,?,?)", (sid, iso(when), var, v * f))

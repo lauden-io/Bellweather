@@ -10,10 +10,10 @@ fallback for type, wind, visibility and cloud.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from ..derive import humidity_from_dew_point
+from ..derive import humidity_from_dew_point, sea_level_pressure
 from ..geo import distance_km
 from ..model import Field, IntensityClass, Kind, Location, PrecipType, Reading, plausible
 from ..privacy import Precision, query_box
@@ -100,11 +100,22 @@ def _number(value: Any) -> float | None:
 
 
 MAX_REPORTS = 1000
+# Each station's hourly temperatures are kept this long, for the 12-hour mean
+# that converts QNH to sea-level pressure (derive.sea_level_pressure). 14, not
+# 13: a report at :20 is filed under the full hour and still needed until the
+# report 12 hours later arrives, past the next full hour.
+TEMPERATURE_MEMORY = timedelta(hours=14)
 
 
-def parse(reports: list[dict[str, Any]], location: Location, attribution: str, box=None) -> list[Reading]:
+def _full_hour(t: datetime) -> datetime:
+    return (t + timedelta(minutes=30)).replace(minute=0, second=0, microsecond=0)
+
+
+def parse(reports: list[dict[str, Any]], location: Location, attribution: str, box=None,
+          earlier: dict[str, dict[datetime, float]] | None = None) -> list[Reading]:
     """Readings from AWC JSON, newest report per station. A broken report is
-    skipped; the others still count."""
+    skipped; the others still count. `earlier`: each station's temperatures
+    by full hour, for the QNH conversion."""
     newest: dict[str, dict[str, Any]] = {}
     for rep in (reports if isinstance(reports, list) else [])[: MAX_REPORTS * 20]:
         if len(newest) >= MAX_REPORTS:
@@ -125,13 +136,14 @@ def parse(reports: list[dict[str, Any]], location: Location, attribution: str, b
     readings: list[Reading] = []
     for sid, rep in newest.items():
         try:
-            readings.extend(_parse_report(sid, rep, location, attribution, box))
+            readings.extend(_parse_report(sid, rep, location, attribution, box, (earlier or {}).get(sid) or {}))
         except (TypeError, ValueError, AttributeError, KeyError, OverflowError, OSError):
             continue
     return readings
 
 
-def _parse_report(sid: str, rep: dict[str, Any], location: Location, attribution: str, box) -> list[Reading]:
+def _parse_report(sid: str, rep: dict[str, Any], location: Location, attribution: str, box,
+                  earlier: dict[datetime, float] | None = None) -> list[Reading]:
     readings: list[Reading] = []
     if True:
         lat, lon = _number(rep.get("lat")), _number(rep.get("lon"))
@@ -184,10 +196,16 @@ def _parse_report(sid: str, rep: dict[str, Any], location: Location, attribution
         if temp is not None and dewp is not None:
             add(Field.HUMIDITY, round(humidity_from_dew_point(temp, dewp), 1))
         # Sea-level pressure where the report has it (North America), else
-        # QNH, the altimeter setting. QNH is reduced with the standard
-        # atmosphere, so it can differ from sea-level pressure by a few hPa
-        # at high or cold airports. AWC gives both in hPa.
-        add(Field.PRESSURE, _number(rep.get("slp")) or _number(rep.get("altim")))
+        # from QNH, the altimeter setting, converted with the airport's height
+        # and the mean of its temperature now and 12 hours earlier. QNH as it
+        # is would differ by several hPa at high or cold airports. AWC gives
+        # both in hPa.
+        pressure = _number(rep.get("slp"))
+        altim, elevation = _number(rep.get("altim")), _number(rep.get("elev"))
+        if pressure is None and altim is not None and elevation is not None and temp is not None:
+            before = (earlier or {}).get(_full_hour(observed - timedelta(hours=12)))
+            pressure = sea_level_pressure(altim, elevation, temp, before)
+        add(Field.PRESSURE, pressure)
         clouds = [c for c in (rep.get("clouds") if isinstance(rep.get("clouds"), list) else [])[:10] if isinstance(c, dict)]
         if clouds:
             add(Field.CLOUD_COVER, max(CLOUD_PERCENT.get(c.get("cover"), 0) for c in clouds))
@@ -204,6 +222,7 @@ class MetarSource(Source):
 
     def __init__(self, radius_km: float = SEARCH_RADIUS_KM) -> None:
         self.radius_km = min(max(radius_km, 1.0), MAX_RADIUS_KM)
+        self._temps: dict[str, dict[datetime, float]] = {}  # station -> full hour -> temperature
 
     async def fetch(self, http: Http, location: Location, precision: Precision, now: datetime) -> list[Reading]:
         box = query_box(location, precision, self.radius_km)
@@ -216,4 +235,17 @@ class MetarSource(Source):
             },
             limit=CAP_METAR,
         )
-        return parse(data or [], location, self.attribution, box)
+        readings = parse(data or [], location, self.attribution, box, self._temps)
+        self._remember(readings, now)
+        return readings
+
+    def _remember(self, readings: list[Reading], now: datetime) -> None:
+        """Each station's temperature by full hour, for 14 hours, at most
+        MAX_REPORTS stations: memory only, gone after a restart (the
+        conversion then uses the temperature now)."""
+        for r in readings:
+            if r.field is Field.TEMPERATURE and r.station_id and isinstance(r.value, (int, float)):
+                self._temps.setdefault(r.station_id, {})[_full_hour(r.observed)] = float(r.value)
+        cutoff = now - TEMPERATURE_MEMORY
+        kept = {sid: {t: v for t, v in hours.items() if t >= cutoff} for sid, hours in self._temps.items()}
+        self._temps = dict(list((sid, h) for sid, h in kept.items() if h)[-MAX_REPORTS:])

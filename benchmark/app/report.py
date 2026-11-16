@@ -105,6 +105,14 @@ def captures_line(start: datetime, end: datetime, recorded: set[str]) -> list[st
     return [text + ".", ""]
 
 
+def pressure_note(since: datetime | None) -> str:
+    if since is None:
+        return ("Not scored yet: it counts from the first capture made with this conversion "
+                "([Changes](../benchmark.md#changes)).")
+    return (f"Scored on captures from {since.astimezone(LOCAL):%d %b %H:%M} UTC on: before, QNH was taken as it is "
+            "([Changes](../benchmark.md#changes)).")
+
+
 def build(db: Path, points_file: Path, days: int, end: datetime) -> str:
     con = sqlite3.connect(db)
     points = json.loads(points_file.read_text(encoding="utf-8"))["points"]
@@ -146,6 +154,8 @@ def build(db: Path, points_file: Path, days: int, end: datetime) -> str:
               "perfect. Brier: the highest rain probability of the block against what happened, 0 is perfect.",
               "- **Daily high and low** use local mean time days (longitude / 15 hours) and the latest forecast made at least "
               "6 hours before the day began that every compared provider answered.",
+              "- **Pressure** is sea-level pressure. An airport that reports only QNH is converted with its official height "
+              "and the mean of its temperature now and 12 hours earlier. " + pressure_note(res_all.pressure_from),
               "- Data: E-SOH and aviationweather.gov (observations); Open-Meteo.com, MET Norway, DWD (CC BY 4.0); OpenWeather (ODbL).",
               "", "Addresses, stations and the method: [docs/benchmark.md](../benchmark.md) and `benchmark/points.json`.", ""]
     return "\n".join(lines)

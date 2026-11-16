@@ -63,6 +63,7 @@ from .const import (
     CONF_LIMITS,
     CONF_LOCAL_HUMIDITY,
     CONF_LOCAL_PRESSURE,
+    CONF_LOCAL_SITED,
     CONF_LOCAL_RAIN_RATE,
     CONF_LOCAL_RAIN_STATE,
     CONF_LOCAL_SNOW_DEPTH,
@@ -454,9 +455,11 @@ class LocationSubentryFlow(_PlaceSteps, ConfigSubentryFlow):
                 self._data[key] = value
 
     async def async_step_sensors(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
-        keys = [*LOCAL_SENSORS, CONF_WEATHER_ENTITY]
+        keys = [*LOCAL_SENSORS, CONF_LOCAL_SITED, CONF_WEATHER_ENTITY]
         if user_input is not None:
             self._keep(keys, user_input)
+            if self._data.get(CONF_LOCAL_SITED) is not True:
+                self._data.pop(CONF_LOCAL_SITED, None)
             return await self.async_step_reconfigure()
         own = self._own_entities()
         not_air = not_barometric(self.hass)
@@ -465,6 +468,7 @@ class LocationSubentryFlow(_PlaceSteps, ConfigSubentryFlow):
             excluded = [*own, *not_air] if key == CONF_LOCAL_PRESSURE else own
             selector = EntitySelector(EntitySelectorConfig(domain=domain, device_class=device_class, exclude_entities=excluded))
             fields[vol.Optional(key, description={"suggested_value": self._data.get(key)})] = selector
+        fields[vol.Optional(CONF_LOCAL_SITED, default=self._data.get(CONF_LOCAL_SITED) is True)] = BooleanSelector()
         fields[vol.Optional(CONF_WEATHER_ENTITY, description={"suggested_value": self._data.get(CONF_WEATHER_ENTITY)})] = (
             EntitySelector(EntitySelectorConfig(domain="weather", exclude_entities=own))
         )

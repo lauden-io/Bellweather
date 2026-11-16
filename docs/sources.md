@@ -32,7 +32,7 @@ A reading is usable when all of these hold:
 | Thunder | your own sensor | airport | model | – | – |
 | Wind, gust, direction | your own sensors | official station ≤ 40 km, ≤ 400 m height difference | airport ≤ 50 km, ≤ 400 m | model | – |
 | Temperature, dew point, humidity | your own sensors | official station ≤ 25 km, ≤ 150 m height difference | airport ≤ 40 km, ≤ 150 m | model | – |
-| Pressure (sea level) | your own sensor | official station ≤ 100 km | airport ≤ 100 km (sea-level pressure, else QNH) | model | – |
+| Pressure (sea level) | your own sensor | official station ≤ 100 km | airport ≤ 100 km (sea-level pressure, else QNH converted with its height and temperature) | model | – |
 | Visibility, fog | your own sensor | official station ≤ 30 km | airport ≤ 40 km | model | – |
 | Cloud cover | model | airport ≤ 40 km | official station | – | – |
 | Snow on the ground | observed depth: own sensor, station or airport ≤ 30 km, ≤ 300 m, ≤ 24 h old | satellite snow map (IMS, Northern Hemisphere) | model snow depth (≥ 2 cm counts) | – | – |

@@ -23,7 +23,18 @@ from homeassistant.util.unit_conversion import (
     TemperatureConverter,
 )
 
-from .const import CONF_FORECAST_MEMBERS, CONF_SOURCES, CONF_USE_ARCHIVE, DOMAIN, FORECAST_INTERVAL, VERIFY_INTERVAL
+from .const import (
+    CONF_FORECAST_MEMBERS,
+    CONF_LOCAL_HUMIDITY,
+    CONF_LOCAL_SITED,
+    CONF_LOCAL_TEMPERATURE,
+    CONF_LOCAL_WIND_SPEED,
+    CONF_SOURCES,
+    CONF_USE_ARCHIVE,
+    DOMAIN,
+    FORECAST_INTERVAL,
+    VERIFY_INTERVAL,
+)
 from .coordinator import BellweatherConfigEntry, BellweatherCoordinator
 from .core.forecast.engine import ForecastEngine, verification_key
 from .core.forecast.members import LIMITS, Hour, Member
@@ -73,6 +84,19 @@ class ForecastCoordinator(TimestampDataUpdateCoordinator[None]):
         except Exception as err:  # noqa: BLE001 - any damage: start fresh rather than fail
             # A damaged store must not stop the integration: start fresh.
             _LOGGER.warning("forecast history could not be read, starting fresh: %s", safe_error(err))
+        # A log from before version 0.1.2 does not say which hours your own
+        # sensors measured: if they are not placed like a station's, their
+        # values are forgotten rather than taught (stations' are lost too).
+        settings = self.now.settings
+        legacy: set[str] = set()
+        if settings.get(CONF_LOCAL_SITED) is not True:
+            if settings.get(CONF_LOCAL_TEMPERATURE):
+                legacy.add("t")
+                if settings.get(CONF_LOCAL_HUMIDITY):
+                    legacy.add("d")
+            if settings.get(CONF_LOCAL_WIND_SPEED):
+                legacy.add("w")
+        self.engine.log.drop_legacy(legacy)
 
     async def _async_update_data(self) -> None:
         now = dt_util.utcnow()

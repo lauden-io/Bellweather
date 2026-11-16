@@ -56,11 +56,12 @@ class MembersTest(unittest.TestCase):
 
 
 class SkillTest(unittest.TestCase):
-    def _data(self, days: int, bias_a: float, bias_b: float):
+    def _data(self, days: int, bias_a: float, bias_b: float, own: bool = True):
+        """own: the hours were measured at the home itself (own sensor)."""
         obs, prev = {}, {"a": {}, "b": {}}
         for i, t in enumerate(hours_back(days * 24)):
             true = 10 + 5 * math.sin(i / 7)
-            obs[t] = {"t": true}
+            obs[t] = {"t": true, "t_own": True} if own else {"t": true}
             prev["a"][t] = {"t": true + bias_a + (0.5 if i % 2 else -0.5)}
             prev["b"][t] = {"t": true + bias_b + (2.0 if i % 2 else -2.0)}
         return obs, prev
@@ -76,6 +77,24 @@ class SkillTest(unittest.TestCase):
         # a has error spread 0.5, b 2.0: weights 4 : 0.25
         value = skill.combine({"a": 12.0, "b": 9.0}, corr.temperature)
         self.assertAlmostEqual(value, (4 * (12 - 2) + 0.25 * (9 + 1)) / 4.25, delta=0.01)
+
+    def test_hours_measured_elsewhere_remove_a_share_of_the_bias(self):
+        obs, prev = self._data(25, 2.0, -1.0, own=False)
+        corr = skill.corrections(obs, prev, NOW)
+        a, b = corr.temperature["a"], corr.temperature["b"]
+        self.assertAlmostEqual(a.bias, 2.0, delta=0.01)  # the error itself is the same
+        self.assertAlmostEqual(a.removed, 2.0 * skill.ELSEWHERE_SHARE["t"], delta=0.01)
+        share = skill.ELSEWHERE_SHARE["t"]
+        value = skill.combine({"a": 12.0, "b": 9.0}, corr.temperature)  # the weights stay 4 : 0.25
+        self.assertAlmostEqual(value, (4 * (12 - 2 * share) + 0.25 * (9 + share)) / 4.25, delta=0.01)
+        self.assertAlmostEqual(b.removed, -1.0 * share, delta=0.01)
+        # half the hours at home, half elsewhere: in between
+        mixed, _ = self._data(25, 2.0, -1.0)
+        for t in mixed:
+            if t.toordinal() % 2:  # every other day (whole days, so the hourly noise cancels)
+                mixed[t].pop("t_own")
+        self.assertAlmostEqual(skill.corrections(mixed, prev, NOW).temperature["a"].removed, (2.0 + 2.0 * share) / 2, delta=0.02)
+        self.assertEqual(skill.ELSEWHERE_SHARE["w"], 0.25)  # wind depends most on the site
 
     def test_plain_mean_without_stats(self):
         self.assertEqual(skill.combine({"a": 1.0, "b": 3.0}, {}), 2.0)
@@ -143,6 +162,79 @@ class HistoryTest(unittest.TestCase):
         measured = Reading(field=Field.TEMPERATURE, value=8.0, kind=Kind.STATION, source="esoh", observed=t)
         log.add({Field.TEMPERATURE: Choice(measured, 1)}, NOW)
         self.assertEqual(log.hours[datetime(2026, 11, 9, 12, tzinfo=timezone.utc)]["t"], 8.0)
+
+    def test_log_takes_own_sensors_only_when_sited_and_marks_them(self):
+        t = datetime(2026, 11, 9, 11, 55, tzinfo=timezone.utc)
+        hour = datetime(2026, 11, 9, 12, tzinfo=timezone.utc)
+        own = Reading(field=Field.TEMPERATURE, value=12.0, kind=Kind.LOCAL, source="local", observed=t)
+        station = Reading(field=Field.TEMPERATURE, value=8.0, kind=Kind.STATION, source="esoh", observed=t)
+        log = history.ObservationLog()
+        log.add({Field.TEMPERATURE: Choice(own, 1)}, NOW)
+        self.assertEqual(log.hours, {})  # a sensor by a warm wall must not teach the forecast
+        log.add({Field.TEMPERATURE: Choice(own, 1)}, NOW, own_sited=True)
+        self.assertEqual(log.hours[hour], {"t": 12.0, "t_own": True})
+        log.add({Field.TEMPERATURE: Choice(station, 1)}, NOW, own_sited=True)
+        self.assertEqual(log.hours[hour], {"t": 8.0})  # measured elsewhere now: the mark goes
+        log.add({Field.TEMPERATURE: Choice(own, 1)}, NOW, own_sited=True)
+        back = history.ObservationLog(log.as_dict())
+        self.assertEqual(back.hours[hour], {"t": 12.0, "t_own": True})
+        junk = history.ObservationLog({"hours": {hour.isoformat(): {"w": 3, "t_own": True, "w_own": "yes"}}})
+        self.assertEqual(junk.hours[hour], {"w": 3.0})  # a mark without its value, or not a bool, is dropped
+
+    def test_own_barometer_counts_even_when_not_sited(self):
+        t = datetime(2026, 11, 9, 11, 55, tzinfo=timezone.utc)
+        hour = datetime(2026, 11, 9, 12, tzinfo=timezone.utc)
+        baro = Reading(field=Field.PRESSURE, value=1012.0, kind=Kind.LOCAL, source="local", observed=t)
+        log = history.ObservationLog()
+        log.add({Field.PRESSURE: Choice(baro, 1)}, NOW)
+        self.assertEqual(log.hours[hour], {"pr": 1012.0, "pr_own": True})  # where it hangs does not change the pressure
+
+    def test_unsited_own_sensors_give_way_to_the_best_station_in_the_log(self):
+        t = datetime(2026, 11, 9, 11, 55, tzinfo=timezone.utc)
+        own_t = Reading(field=Field.TEMPERATURE, value=14.0, kind=Kind.LOCAL, source="local", observed=t)
+        own_p = Reading(field=Field.PRESSURE, value=1012.0, kind=Kind.LOCAL, source="local", observed=t)
+        station = Reading(field=Field.TEMPERATURE, value=9.0, kind=Kind.STATION, source="esoh", observed=t,
+                          distance_km=5.0, elevation=40.0, station="A", station_id="a")
+        readings = [own_t, own_p, station]
+        shown = {Field.TEMPERATURE: Choice(own_t, 1), Field.PRESSURE: Choice(own_p, 1)}
+        asked = []
+
+        def refuse(rest):
+            asked.append(rest)
+            return {Field.TEMPERATURE: Choice(station, 1), Field.PRESSURE: Choice(station, 1)}
+
+        got = history.choices_for_log(readings, shown, False, refuse)
+        self.assertEqual(asked, [[station]])  # the fusion again, without the own sensors
+        self.assertIs(got[Field.TEMPERATURE].reading, station)
+        self.assertIs(got[Field.PRESSURE].reading, own_p)  # the own barometer stays
+        self.assertIs(history.choices_for_log(readings, shown, True, refuse), shown)  # sited: what was shown
+        self.assertIs(history.choices_for_log([station], shown, False, refuse), shown)  # no own sensors at all
+
+    def test_old_logs_forget_values_that_may_be_an_unsited_own_sensor(self):
+        hour = datetime(2026, 11, 9, 12, tzinfo=timezone.utc)
+        old = history.ObservationLog({"hours": {hour.isoformat(): {"t": 14.0, "w": 5.0, "pr": 1012.0, "wet": False}}})
+        self.assertTrue(old.legacy)
+        old.drop_legacy({"t"})
+        self.assertEqual(old.hours[hour], {"w": 5.0, "pr": 1012.0, "wet": False})
+        old.drop_legacy({"w"})  # once only
+        self.assertIn("w", old.hours[hour])
+        new = history.ObservationLog(old.as_dict())
+        self.assertFalse(new.legacy)
+        new.drop_legacy({"t", "w"})
+        self.assertIn("w", new.hours[hour])
+
+    def test_merge_takes_each_value_from_where_it_was_measured(self):
+        t = datetime(2026, 11, 9, 12, tzinfo=timezone.utc)
+        home = {t: {"w": 3.0, "wet": False}}  # an own temperature sensor not sited: no temperature at home
+        prev_home = {"a": {t: {"t": 12.0, "w": 4.0, "p": 0.0}}}
+        air = {t: {"t": 9.0, "w": 20.0, "wet": True}}
+        prev_air = {"a": {t: {"t": 10.0, "w": 18.0, "p": 1.0}}}
+        obs, prev = merge(home, prev_home, air, prev_air)
+        self.assertEqual(obs[t], {"t": 9.0, "w": 3.0, "wet": False})
+        self.assertEqual(prev["a"][t], {"t": 10.0, "w": 4.0, "p": 0.0})
+        from core.forecast.engine import _source
+        self.assertEqual(_source(home, air, obs, prev_home), "mixed")
+        self.assertIs(home[t].get("t"), None)  # the inputs are not changed
 
     def test_log_reload_drops_garbage(self):
         log = history.ObservationLog({"hours": {"2026-11-09T12:00:00+00:00": {"t": "nan", "w": 5}, "x": {}, "2026-11-09T13:00:00": {"t": 1}}})

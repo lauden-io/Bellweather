@@ -148,6 +148,16 @@ Checked on 2026-11-10 and left out:
 - **Values:** temperature, dew point, wind speed, sea-level pressure,
   "wet hour" (any precipitation reported), and the day's highest and
   lowest temperature.
+- **Pressure** is sea-level pressure, what every forecast gives. Most
+  airports outside North America report only QNH, the altimeter setting,
+  which is reduced with the standard atmosphere instead of the real air:
+  at Medellín (1,491 m) the models' sea-level pressure and the airport's
+  QNH differed by 6.6 hPa on average over 90 days. Such a report is converted with the airport's official height
+  (in `points.json`) and the mean of its temperature now and 12 hours
+  earlier, as weather services reduce pressure. High up, sea-level
+  pressure stays partly a convention: the models' value and the converted
+  one still differed by 4.3 hPa on average at Medellín over 90 days. Every
+  provider is judged against the same value.
 - **Lead times:** 0–6 hours, day 1 (24–47 hours ahead), day 2, day 3.
 - **Pairing:** an hour counts only if every compared provider has a value
   for it, so all are scored on exactly the same hours. The number of hours
@@ -222,3 +232,13 @@ made up from later data, and nothing is left out quietly:
   (this gap included), each report lists missed captures, and the daily high
   and low use the latest capture that every provider answered, so all are
   judged at the same lead.
+- 2026-11-16: pressure scored as sea-level pressure everywhere. Until now a
+  QNH-only airport's QNH was taken as it is, as the truth and in
+  Bellweather's own correction, so the pressure column of the first reports
+  compared different quantities at high airports (Goiânia, Medellín).
+  Pressure now counts only on captures made with the conversion; each
+  capture records the method it used. In the same add-on version
+  Bellweather removes only a share of a model's error learned at a station
+  or airport rather than at the address itself (docs/forecast.md,
+  "Corrections learned elsewhere"); temperature, dew point and wind are
+  scored as before.

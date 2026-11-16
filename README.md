@@ -14,7 +14,7 @@ at your home, in Home Assistant.
 It is for everyone: any Home Assistant installation, anywhere in the world,
 with no account, no API key and no extra hardware.
 
-Version **0.1.1** (what is new: [CHANGELOG.md](CHANGELOG.md)).
+Version **0.1.2** (what is new: [CHANGELOG.md](CHANGELOG.md)).
 
 ## Why I built it
 
@@ -221,7 +221,10 @@ and close**; the X closes without saving.
   - **Name and place**: rename, search, move the pin.
   - **Your own sensors**: rain rate, rain detector, wind, gust, direction,
     visibility, snow depth, temperature, humidity, pressure. They beat every
-    public source. Also a weather entity as the last fallback.
+    public source. Also a weather entity as the last fallback, and whether
+    your sensors are placed like a weather station's: only then does the
+    forecast learn its corrections from them (off by default, because a
+    sensor by a warm wall would teach it the wall's warmth).
   - **Forecast members**: your own weather entities join the blend and are
     scored like the built-in models.
   - **Stations and limits**: stations to ignore, and the distance and height

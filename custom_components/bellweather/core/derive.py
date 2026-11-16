@@ -1,5 +1,6 @@
 """Values computed from other values: humidity, feels-like temperature,
-the sun's height and compass points. Pure functions, no I/O."""
+sea-level pressure from an airport's QNH, the sun's height and compass
+points. Pure functions, no I/O."""
 
 from __future__ import annotations
 
@@ -64,6 +65,40 @@ def solar_elevation(latitude: float, longitude: float, when: datetime) -> float:
     lat = math.radians(latitude)
     cos_zenith = math.sin(lat) * math.sin(decl) + math.cos(lat) * math.cos(decl) * math.cos(hour_angle)
     return 90.0 - math.degrees(math.acos(max(-1.0, min(1.0, cos_zenith))))
+
+
+# Standard atmosphere (ICAO): sea-level temperature, lapse rate, and the
+# exponent g / (R L) with g = 9.80665 m/s2 and R = 287.053 J/(kg K).
+_ISA_T0 = 288.15
+_ISA_LAPSE = 0.0065
+_ISA_EXPONENT = 5.25588
+_G_OVER_R = 9.80665 / 287.053
+
+
+def sea_level_pressure(qnh_hpa: float, elevation_m: float, temperature_c: float,
+                       temperature_12h_c: float | None = None) -> float | None:
+    """Sea-level pressure in hPa from an airport's QNH (altimeter setting).
+
+    QNH is the station pressure reduced to sea level with the standard
+    atmosphere, so the station pressure comes back exactly from it and the
+    station's height. Weather models and weather services reduce with the
+    real air temperature instead, so at a high or a cold airport the two
+    differ by several hPa (the models' sea-level pressure and Medellin's
+    QNH, 1,491 m: 6.6 hPa apart on average over 90 days).
+    Here the station pressure is reduced again, through an air column whose
+    mean temperature is the station's plus half of the standard lapse rate
+    times the height (the air below the station's level is taken as warmer). The station's temperature is the mean of now and 12 hours
+    earlier, the usual practice for sea-level pressure (WMO No. 8), which
+    keeps the day's warming and the night's cooling out of the pressure.
+    Humidity is left out (a few tenths of a hPa at most, at high and humid
+    places). Returns None for values outside physical limits."""
+    if not (850.0 <= qnh_hpa <= 1090.0 and -500.0 <= elevation_m <= 5000.0 and -90.0 <= temperature_c <= 60.0):
+        return None
+    if temperature_12h_c is not None and -90.0 <= temperature_12h_c <= 60.0:
+        temperature_c = (temperature_c + temperature_12h_c) / 2
+    station = qnh_hpa * (1.0 - _ISA_LAPSE * elevation_m / _ISA_T0) ** _ISA_EXPONENT
+    column = temperature_c + 273.15 + _ISA_LAPSE * elevation_m / 2
+    return station * math.exp(_G_OVER_R * elevation_m / column)
 
 
 # Sunrise and sunset are defined at -0.833 degrees (US Naval Observatory:

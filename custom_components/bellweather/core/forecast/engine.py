@@ -39,7 +39,9 @@ from .members import DEFAULT_MODELS, Member, fetch_forecast, fetch_previous
 from .skill import Corrections, MemberStats, Previous, Score, WetScore
 
 HISTORY_DAYS = 65  # 30 days of corrections + 30 scored days + margin
-VERIFICATION_VERSION = 3  # 2: archive hours at :15/:45 count; 3: dew point and pressure corrected (2026-11-10)
+# 2: archive hours at :15/:45 count; 3: dew point and pressure corrected (2026-11-10);
+# 4: only a share of the bias for hours measured elsewhere, QNH converted (2026-11-16)
+VERIFICATION_VERSION = 4
 VERIFICATION_MAX_AGE = timedelta(days=1)
 KEEP_ARCHIVE_VERIFICATION = timedelta(days=3)  # kept when only the archive failed
 RECORD_LEAD = timedelta(hours=24)
@@ -74,18 +76,18 @@ def verification_key(location: Location, precision: Precision, models: list[str]
 
 
 def _stats_out(stats: dict[str, MemberStats]) -> dict[str, list[float]]:
-    return {str(m)[:255]: [s.bias, s.mse, s.mae, s.hours] for m, s in stats.items()}
+    return {str(m)[:255]: [s.bias, s.mse, s.mae, s.hours, s.removed] for m, s in stats.items()}
 
 
 def _stats_in(data: Any) -> dict[str, MemberStats]:
     out: dict[str, MemberStats] = {}
     for member, row in (data.items() if isinstance(data, dict) else []):
-        if not isinstance(row, list) or len(row) != 4:
+        if not isinstance(row, list) or len(row) != 5:
             continue
-        bias, mse, mae, hours = (finite(v) for v in row)
-        if None in (bias, mse, mae, hours) or mse < 0 or mae < 0 or hours < 0:
+        bias, mse, mae, hours, removed = (finite(v) for v in row)
+        if None in (bias, mse, mae, hours, removed) or mse < 0 or mae < 0 or hours < 0:
             continue
-        out[str(member)[:255]] = MemberStats(bias=bias, mse=mse, mae=mae, hours=int(hours))
+        out[str(member)[:255]] = MemberStats(bias=bias, mse=mse, mae=mae, hours=int(hours), shift=removed)
     return out
 
 
@@ -283,7 +285,7 @@ def _compute(
     records: dict[str, dict[datetime, dict[str, float]]], now: datetime, airport: str | None,
 ) -> Verification:
     obs, prev = merge(obs_home, prev_home, obs_air, prev_air)
-    corr = skill.corrections(obs, prev, now, source=_source(obs_home, obs_air, obs))
+    corr = skill.corrections(obs, prev, now, source=_source(obs_home, obs_air, obs, prev_home))
     # Weather entities enter the weighting once they have enough days of
     # their own record, and only when the models' corrections are active.
     for var, target in (("t", corr.temperature), ("w", corr.wind)):
@@ -303,28 +305,53 @@ def _compute(
     )
 
 
+# Observed value -> the forecast values scored against it ("wet": the hour's amounts).
+MERGED = {"t": ("t",), "w": ("w",), "d": ("d",), "pr": ("pr",), "wet": ("p",)}
+
+
+def _from_home(t: datetime, key: str, obs_home: Observations, prev_home: Previous) -> bool:
+    return key in obs_home.get(t, {}) and any(f in rows.get(t, {}) for rows in prev_home.values() for f in MERGED[key])
+
+
 def merge(obs_home: Observations, prev_home: Previous, obs_air: Observations, prev_air: Previous) -> tuple[Observations, Previous]:
-    """One series: for each hour the home's own observation and forecast
-    when there is one, else the airport's."""
+    """One series: for each hour and each value, the home's own observation
+    and forecast when there is one, else the airport's. Per value, not per
+    hour: an hour whose home row has only wind still takes the airport's
+    temperature."""
     obs: Observations = {}
     prev: Previous = {m: {} for m in set(prev_home) | set(prev_air)}
     for t in set(obs_home) | set(obs_air):
-        use_home = t in obs_home and any(t in rows for rows in prev_home.values())
-        src_obs, src_prev = (obs_home, prev_home) if use_home else (obs_air, prev_air)
-        if t not in src_obs:
-            continue
-        obs[t] = src_obs[t]
-        for member, rows in src_prev.items():
-            if t in rows:
-                prev.setdefault(member, {})[t] = rows[t]
+        for key, forecast_keys in MERGED.items():
+            if _from_home(t, key, obs_home, prev_home):
+                src_obs, src_prev = obs_home, prev_home
+            elif key in obs_air.get(t, {}):
+                src_obs, src_prev = obs_air, prev_air
+            else:
+                continue
+            row = obs.setdefault(t, {})
+            row[key] = src_obs[t][key]
+            if src_obs[t].get(f"{key}_own") is True:
+                row[f"{key}_own"] = True
+            for member, rows in src_prev.items():
+                hour = rows.get(t)
+                if hour is None:
+                    continue
+                for f in forecast_keys:
+                    if f in hour:
+                        prev.setdefault(member, {}).setdefault(t, {})[f] = hour[f]
     return obs, {m: rows for m, rows in prev.items() if rows}
 
 
-def _source(obs_home: Observations, obs_air: Observations, merged: Observations) -> str | None:
-    home = sum(1 for t in merged if merged[t] is obs_home.get(t))
-    air = len(merged) - home
+def _source(obs_home: Observations, obs_air: Observations, merged: Observations, prev_home: Previous | None = None) -> str | None:
+    """Where the merged hours came from: "home", "airport" or "mixed"."""
     if not merged:
         return None
+    home = air = 0
+    for t, row in merged.items():
+        keys = [k for k in row if k in MERGED]
+        from_home = [k for k in keys if _from_home(t, k, obs_home, prev_home or {})]
+        home += bool(from_home)
+        air += len(from_home) < len(keys)
     if home and air:
         return "mixed"
     return "home" if home else "airport"

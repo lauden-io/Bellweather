@@ -6,7 +6,7 @@ from datetime import timedelta
 
 DOMAIN = "bellweather"
 NAME = "Bellweather"
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 PROJECT_URL = "https://github.com/lauden-io/Bellweather"
 # MET Norway requires contact details in the User-Agent: an e-mail address, a
 # website, or a public repository where issues can be opened. The project's
@@ -39,6 +39,9 @@ CONF_LOCAL_SNOW_DEPTH = "local_snow_depth"
 CONF_LOCAL_TEMPERATURE = "local_temperature"
 CONF_LOCAL_HUMIDITY = "local_humidity"
 CONF_LOCAL_PRESSURE = "local_pressure"
+# Off by default: own sensors then show the weather now but do not teach the
+# forecast (a sensor by a warm wall would teach it the wall's warmth).
+CONF_LOCAL_SITED = "local_sited"
 
 # Forecast
 CONF_FORECAST_MEMBERS = "forecast_members"  # the user's weather entities that join the blend

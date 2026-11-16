@@ -130,11 +130,13 @@
             "local_wind_direction": "Own wind direction sensor",
             "local_visibility": "Own visibility sensor",
             "local_snow_depth": "Own snow depth sensor",
+            "local_sited": "My sensors are placed like a weather station's",
             "weather_entity": "Weather entity (last fallback)"
           },
           "data_description": {
             "local_rain_state": "A rain detector (moisture class). Leak sensors share this class: pick the rain one.",
             "local_pressure": "Pressure reduced to sea level (often called relative pressure). Absolute pressure at the sensor is not converted.",
+            "local_sited": "Shaded and ventilated, 1.5 to 2 m above open ground, away from walls and roofs; a wind sensor high and in the clear. Then the forecast learns its corrections from them in full. Off: they still show the weather now, but the forecast does not learn from them, because a sensor by a warm wall would teach it the wall's warmth.",
             "weather_entity": "Used only when no observation is available for a value."
           },
           "submit": "Back to the menu"
