@@ -101,7 +101,7 @@ def captures_line(start: datetime, end: datetime, recorded: set[str]) -> list[st
         text += (" (missed: " + ", ".join(f"{t.astimezone(LOCAL):%d %b %H:%M}" for t in missed) + " UTC). A missed capture is "
                  "never made up later, because a later one would see newer forecasts; every provider misses the same ones, so "
                  "the comparison stays fair, on fewer hours. Station reports missed during a gap are fetched again "
-                 "automatically while the services still keep them.")
+                 "automatically while the services still keep them")
     return [text + ".", ""]
 
 

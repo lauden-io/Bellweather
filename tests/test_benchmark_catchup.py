@@ -139,6 +139,8 @@ class ReportAndDailyTests(unittest.TestCase):
         recorded = {runner.iso(start + timedelta(hours=4 * i)) for i in range(6) if i not in (3, 4)}
         line = report.captures_line(start, start + timedelta(days=1), recorded)[0]
         self.assertTrue(line.startswith("**Captures:** 4 of 6 made (missed: 11 Nov 11:00, 11 Nov 15:00 UTC)"))
+        self.assertTrue(line.endswith("still keep them."))
+        self.assertNotIn("..", line)
         self.assertEqual(report.captures_line(start, start + timedelta(days=1), {runner.iso(start + timedelta(hours=4 * i))
                                                                               for i in range(6)})[0], "**Captures:** 6 of 6 made.")
 

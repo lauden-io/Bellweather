@@ -176,6 +176,10 @@ After 1 week, 2 weeks, 30 days, 3 months, 6 months and 1 year: on 18 and
 in `docs/benchmark/`, and opens with the explanation above. One week says
 little; the report says so.
 
+Reports so far:
+
+- [1 week, 10–17 November 2026](benchmark/2026-11-17-1-week.md)
+
 ## How it runs
 
 A small Home Assistant add-on on a home server, running all year
