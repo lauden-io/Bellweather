@@ -38,7 +38,7 @@ from core.privacy import Precision  # noqa: E402
 from core.sources import make_sources  # noqa: E402
 from core.safety import MAX_IMAGE_BYTES, MAX_JSON_BYTES, MAX_TEXT_BYTES, HttpStatusError, UnsafeResponse, check_url  # noqa: E402
 
-VERSION = "0.2.4"
+VERSION = "0.2.5"
 DATA = Path(os.environ.get("BENCH_DATA") or ("/data" if Path("/data").exists() else str(APP / "data")))
 START = datetime(2026, 11, 10, 23, 0, tzinfo=timezone.utc)  # 2026-11-11 00:00 Central European Time
 CAPTURE_HOURS = {23, 3, 7, 11, 15, 19}  # every 4 hours from the start
