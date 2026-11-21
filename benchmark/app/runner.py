@@ -38,7 +38,9 @@ from core.privacy import Precision  # noqa: E402
 from core.sources import make_sources  # noqa: E402
 from core.safety import MAX_IMAGE_BYTES, MAX_JSON_BYTES, MAX_TEXT_BYTES, HttpStatusError, UnsafeResponse, check_url  # noqa: E402
 
-VERSION = "0.2.5"
+import export  # noqa: E402
+
+VERSION = "0.2.6"
 DATA = Path(os.environ.get("BENCH_DATA") or ("/data" if Path("/data").exists() else str(APP / "data")))
 START = datetime(2026, 11, 10, 23, 0, tzinfo=timezone.utc)  # 2026-11-11 00:00 Central European Time
 CAPTURE_HOURS = {23, 3, 7, 11, 15, 19}  # every 4 hours from the start
@@ -51,6 +53,10 @@ METHOD = "pressure-qnh-converted"
 SHARE = Path("/share/bellweather_benchmark") if Path("/share").exists() else DATA / "share"
 REPORTS = [7, 14, 30, 91, 182, 365]  # days after the start
 REPORT_DELAY = timedelta(hours=6)  # the last day's reports are in by then
+# Each report from the second on is written with its raw data (export.py). The
+# first week's were exported by hand from a copy of this database, before the
+# add-on wrote them (docs/benchmark.md, Changes, 2026-11-21).
+EXPORTS_FROM = 14  # days
 HOME_LOG_SINCE = START  # Bellweather's own local log runs from the start, as in Home Assistant
 VERIFY_EVERY = timedelta(hours=24)
 # How far back each request for station reports reaches. Normally a few hours,
@@ -61,6 +67,12 @@ VERIFY_EVERY = timedelta(hours=24)
 METAR_RECENT, METAR_KEEPS = timedelta(hours=3), timedelta(hours=48)
 ESOH_RECENT, ESOH_KEEPS = timedelta(hours=6), timedelta(hours=24)
 COVERED_SLACK = timedelta(minutes=5)
+
+# The commit the add-on was built from (build_addon.py), recorded in every export.
+try:
+    BUILD = json.loads((APP / "build.json").read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    BUILD = {}
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout)
 log = logging.getLogger("benchmark")
@@ -123,15 +135,7 @@ HTTP = Http()
 
 # --- storage ---------------------------------------------------------------------
 
-SCHEMA = """
-    CREATE TABLE IF NOT EXISTS forecast (
-        capture TEXT, point TEXT, provider TEXT, target TEXT, var TEXT, value REAL,
-        PRIMARY KEY (capture, point, provider, target, var));
-    CREATE TABLE IF NOT EXISTS observation (
-        station TEXT, time TEXT, var TEXT, value REAL, PRIMARY KEY (station, time, var));
-    CREATE TABLE IF NOT EXISTS run (time TEXT, kind TEXT, point TEXT, provider TEXT, status TEXT);
-    CREATE TABLE IF NOT EXISTS fetched (source TEXT, start TEXT, until TEXT);
-"""
+SCHEMA = export.SCHEMA
 
 
 def db(path: Path | None = None) -> sqlite3.Connection:
@@ -490,6 +494,16 @@ def write_reports(now: datetime) -> None:
         if now >= end + REPORT_DELAY and not path.exists():
             path.write_text(report.build(DATA / "benchmark.sqlite", APP / "points.json", days, end), encoding="utf-8")
             log.info("report written: %s", path.name)
+        raw = SHARE / "exports" / path.stem
+        if path.exists() and days >= EXPORTS_FROM and not (raw / "MANIFEST.json").exists():
+            since = START + timedelta(days=REPORTS[REPORTS.index(days) - 1])  # the captures since the previous report
+            try:
+                points = json.loads((APP / "points.json").read_text(encoding="utf-8"))["points"]
+                export.export(DATA / "benchmark.sqlite", points, raw, since, end, name=path.stem, version=VERSION,
+                              commit=BUILD.get("commit"), clean=BUILD.get("clean"))
+                log.info("raw data exported: %s", raw.name)
+            except Exception as err:  # noqa: BLE001
+                log.warning("raw data export %s failed: %s", raw.name, type(err).__name__)
     days = (now - START).days
     if days >= 1:
         end = START + timedelta(days=days)

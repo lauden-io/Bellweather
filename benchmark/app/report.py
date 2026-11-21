@@ -5,6 +5,11 @@
 The period ends at `--end` (default: the latest full UTC day) and covers the
 given number of days. Two comparisons: all providers at the addresses where
 DWD has a point within 25 km, and every provider except DWD at all addresses.
+Since 2026-11-21 a supplement: every hour at all addresses, without DWD and
+OpenWeather (OpenWeather gives every third hour, so with it only those pair).
+
+Runs in the add-on, or in a checkout of the repository (it then finds
+Bellweather's core in custom_components/bellweather).
 """
 
 from __future__ import annotations
@@ -13,10 +18,17 @@ import argparse
 import json
 import math
 import sqlite3
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import score
+try:
+    import score
+except ModuleNotFoundError as err:  # a checkout of the repository: the core is not copied next to it
+    if err.name != "core":
+        raise
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "custom_components" / "bellweather"))
+    import score
 
 LOCAL = timezone.utc
 BENCHMARK_START = datetime(2026, 11, 10, 23, 0, tzinfo=timezone.utc)  # as in runner.py
@@ -62,8 +74,8 @@ def table(rows: list[str], cols: list[tuple[str, dict[str, float | None], str, b
     return out
 
 
-def section(res: score.Result, title: str, places: int) -> list[str]:
-    lines = [f"## {title}", ""]
+def section(res: score.Result, title: str, places: int, intro: str | None = None) -> list[str]:
+    lines = [f"## {title}", ""] + ([intro, ""] if intro else [])
     if not res.hours.get("t"):
         return lines + ["No paired hours yet.", ""]
     lines += [f"{places} addresses · {res.hours.get('t', 0):,} paired hours (temperature) · "
@@ -125,6 +137,8 @@ def build(db: Path, points_file: Path, days: int, end: datetime) -> str:
     near_dwd = [p for p in points if p["mosmix"]["distance_km"] <= score.DWD_MAX_KM]
     res_all = score.score(con, near_dwd, start, end, all_providers)
     res_rest = score.score(con, points, start, end, without_dwd)
+    every_hour = [p for p in without_dwd if p != "openweather"]
+    res_hourly = score.score(con, points, start, end, every_hour) if every_hour != without_dwd else None
     con.close()
     name = PERIOD_NAME.get(days, f"{days} days")
     first, last = start.astimezone(LOCAL), (end - timedelta(seconds=1)).astimezone(LOCAL)
@@ -144,6 +158,11 @@ def build(db: Path, points_file: Path, days: int, end: datetime) -> str:
     lines += captures_line(start, end, recorded)
     lines += section(res_all, "All providers (addresses with a DWD point within 25 km)", len(near_dwd))
     lines += section(res_rest, "All addresses, without DWD", len(points))
+    if res_hourly is not None:
+        lines += section(res_hourly, "All addresses, every hour, without DWD and OpenWeather", len(points),
+                         "A supplement since 21 November 2026 ([Changes](../benchmark.md#changes)). OpenWeather gives "
+                         "every third hour, so the tables above pair only those; without it every hour pairs, about three "
+                         "times as many. The tables above are unchanged.")
     lines += ["## Notes", "",
               "- **Bellweather** runs at each address as in Home Assistant, with the airport archive on (nearest airport within 60 km "
               "other than the scoring station). The **control** is the same models' plain mean.",
@@ -157,6 +176,8 @@ def build(db: Path, points_file: Path, days: int, end: datetime) -> str:
               "- **Pressure** is sea-level pressure. An airport that reports only QNH is converted with its official height "
               "and the mean of its temperature now and 12 hours earlier. " + pressure_note(res_all.pressure_from),
               "- Data: E-SOH and aviationweather.gov (observations); Open-Meteo.com, MET Norway, DWD (CC BY 4.0); OpenWeather (ODbL).",
+              "- Raw data, with the commit of the code that recomputes this report from them: "
+              "[Bellweather-Benchmark-Data](https://github.com/lauden-io/Bellweather-Benchmark-Data/releases).",
               "", "Addresses, stations and the method: [docs/benchmark.md](../benchmark.md) and `benchmark/points.json`.", ""]
     return "\n".join(lines)
 

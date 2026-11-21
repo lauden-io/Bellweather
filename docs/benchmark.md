@@ -45,9 +45,12 @@ What it cannot tell:
 - Measurements are not perfect either: an official thermometer is good to a
   few tenths of a degree (WMO guidance), small next to forecast errors of
   about a degree, and the same for everyone.
-- Little data can mislead. A week is about 4,000 scored hours, and a week can
-  go the other way from a month; that is why there are reports after two
-  weeks, a month, a quarter, half a year and a year.
+- Little data can mislead. A week has 168 hours at each of the 24
+  addresses, 4,032 in all; missed captures and hours without a station
+  report leave fewer (2,903 paired temperature hours in the first week,
+  without OpenWeather). Where OpenWeather takes part, only every third hour
+  pairs (973 in the first week). A week can go the other way from a month; that is why there are
+  reports after two weeks, a month, a quarter, half a year and a year.
 - Only what is measured can be judged. Where nothing measures a value (UV,
   in most places), nothing is claimed.
 
@@ -161,7 +164,9 @@ Checked on 2026-11-10 and left out:
 - **Lead times:** 0–6 hours, day 1 (24–47 hours ahead), day 2, day 3.
 - **Pairing:** an hour counts only if every compared provider has a value
   for it, so all are scored on exactly the same hours. The number of hours
-  is always shown.
+  is always shown. OpenWeather gives every third hour, so where it takes
+  part only those pair; since 21 November 2026 a supplementary table scores
+  every hour without it.
 - **Measures:** mean absolute error; for wet hours the critical success
   index and, where a provider gives a probability, the Brier score.
 - **Capture:** every 4 hours, at 00, 04, 08, 12, 16 and 20 Central European
@@ -178,7 +183,8 @@ little; the report says so.
 
 Reports so far:
 
-- [1 week, 10–17 November 2026](benchmark/2026-11-17-1-week.md)
+- [1 week, 10–17 November 2026](benchmark/2026-11-17-1-week.md), raw data:
+  [2026-11-17-1-week](https://github.com/lauden-io/Bellweather-Benchmark-Data/releases/tag/2026-11-17-1-week)
 
 ## How it runs
 
@@ -188,9 +194,27 @@ scores, `report.py` writes the reports). It creates no entities, keeps its
 data in the add-on's own storage, and keeps API keys only in the add-on's
 settings, never in this repository. Each report is written automatically
 at 05:00 UTC the morning after its period ends. The
-script, the address list, the seed and the raw data of every provider whose
-licence allows it are published with each report, so anyone can repeat the
-test.
+script, the address list and the seed are in this repository.
+
+**Raw data.** Every report comes with a release in
+[Bellweather-Benchmark-Data](https://github.com/lauden-io/Bellweather-Benchmark-Data), so anyone can repeat the test.
+Nothing is picked:
+
+- the forecasts of every provider at every capture made in the report's
+  period, as stored (the releases add up to every capture);
+- every scoring station report and the outcome of every request, recorded
+  from the start up to the export (reports can arrive, or be fetched again,
+  hours late);
+- each file under its source's licence: OpenWeather's under the ODbL, in a
+  file of its own; the airport reports, public domain in the United States;
+  the rest CC BY 4.0. Each release lists the sources and the changes made
+  (units, the hour a precipitation amount belongs to);
+- a manifest with every file's row count and SHA-256, and the commit of the
+  code that recomputes the report from these files alone
+  (`benchmark/app/export.py` loads them, `report.py` scores them).
+
+Before a release is published, its report is recomputed from its files, and
+the tables have to match.
 
 Calls: 24 addresses × 6 captures a day is about 4,300 calls a month per
 provider, within every free plan above.
@@ -246,3 +270,19 @@ made up from later data, and nothing is left out quietly:
   or airport rather than at the address itself (docs/forecast.md,
   "Corrections learned elsewhere"); temperature, dew point and wind are
   scored as before.
+- 2026-11-21: the raw data are published, in
+  [Bellweather-Benchmark-Data](https://github.com/lauden-io/Bellweather-Benchmark-Data), one release per
+  report. Promised from the start, they were missing from the first report.
+  From the 2-week report on, the add-on exports them when it writes the
+  report. The first week's were exported from a copy of the add-on's
+  database taken on 20 November, with the station reports up to the moment
+  the report was written (18 November, 05:16 UTC); its tables recompute
+  exactly.
+- 2026-11-21: the sentence on how many hours a week scores is corrected. It
+  said "about 4,000", which counts every hour at every address. Missed
+  captures and hours without a station report leave fewer (2,903 paired
+  temperature hours in the first week, without OpenWeather), and with OpenWeather, which gives every third
+  hour, the comparison of all providers pairs only a third of them (973).
+  So from the 2-week report on, a supplementary table scores every hour
+  without OpenWeather and DWD. It is added after the results of the first
+  week, so it only adds: the existing tables are unchanged.

@@ -9,3 +9,7 @@ Options:
 - `contact`: an e-mail address or URL added to the User-Agent (MET Norway asks for one).
 
 Data stay in the add-on's own storage (`/data/benchmark.sqlite`). It creates no entities.
+
+Reports are written to `/share/bellweather_benchmark/reports`, each from the second on with its raw
+data in `/share/bellweather_benchmark/exports/<report>` (`app/export.py`: files split by licence,
+`MANIFEST.json` with row counts and SHA-256, `ATTRIBUTION.md`). Nothing is uploaded from here.
