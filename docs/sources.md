@@ -60,6 +60,12 @@ Rules that hold across the chain:
   rain while the airport 15 km away reports nothing.
 - **No radar is not "dry".** Where the radar coverage map shows no radar,
   the radar gives no answer at all, and the next source decides.
+- **A radar echo counts from 0.1 mm/h of water.** Rain is converted with
+  Marshall and Palmer (Z = 200 R^1.6), snow with Gunn and Marshall (1958,
+  Z = 2000 R²): the same echo is far less water as snow. So rain counts
+  above 7 dBZ, snow above 13 dBZ. A fainter echo is often precipitation
+  aloft that dries out on the way down, in the dry, cold air of a winter
+  high; it counts as 0, also in the last hour's amount.
 - **Snow on the ground is never derived from snowfall.** Snow can fall
   without settling, and a landscape can stay white for weeks without any
   snowfall.

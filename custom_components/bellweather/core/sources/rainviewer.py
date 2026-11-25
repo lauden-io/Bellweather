@@ -55,10 +55,25 @@ MAX_NEW_FRAMES = 13  # new past frames read per update (about 2 hours)
 _PATH = re.compile(r"^/v2/radar/[0-9a-f]{6,32}$")
 
 
-def rain_rate(dbz: float) -> float:
-    """mm/h from reflectivity with the classic Marshall-Palmer relation
-    Z = 200 R^1.6. To be tuned against stations (snow needs its own)."""
-    return ((10 ** (dbz / 10)) / 200) ** (1 / 1.6)
+def rain_rate(dbz: float, snow: bool = False) -> float:
+    """mm/h of water from reflectivity. Rain: Marshall and Palmer, Z = 200
+    R^1.6. Snow: Gunn and Marshall (1958, J. Meteor. 15, 452-466), Z = 2000
+    R^2 for aggregate snowflakes. The same echo is far less water as snow:
+    10 dBZ is 0.15 mm/h as rain but 0.07 mm/h as snow, below the 0.1 mm/h
+    that counts as wet. With the rain relation a faint snow echo aloft,
+    drying out before it reached the ground, was called light snow."""
+    z = 10 ** (dbz / 10)
+    if snow:
+        return (z / 2000) ** 0.5
+    return (z / 200) ** (1 / 1.6)
+
+
+def radar_rate(dbz: float, snow: bool) -> float:
+    """The rate at the point: an echo below 0.1 mm/h of water is not
+    precipitation, so it counts as 0, also in the last hour's amount. The
+    exact value decides: 0.0999 is not rounded up to wet."""
+    rate = rain_rate(dbz, snow)
+    return rate if rate >= WET_MM_PER_HOUR else 0.0
 
 
 def parse_colour_table(text: str) -> dict[tuple[int, int, int, int], tuple[float, bool]]:
@@ -181,7 +196,7 @@ class RainViewerSource(Source):
             hit = (await self._colour_table(http, now)).get(rgba)
             if hit is None:
                 return None  # a colour outside the table: do not guess
-            frame = Frame(when, round(rain_rate(hit[0]), 2), hit[1])
+            frame = Frame(when, radar_rate(*hit), hit[1])
         self._frames[when] = frame
         return frame
 
@@ -219,7 +234,7 @@ class RainViewerSource(Source):
         ptype = (PrecipType.SNOW if newest.snow else PrecipType.RAIN) if wet else PrecipType.NONE
         out = [
             Reading(field=Field.RAIN_NOW, value=wet, observed=newest.time, **common),
-            Reading(field=Field.INTENSITY, value=newest.rate, observed=newest.time, **common),
+            Reading(field=Field.INTENSITY, value=round(newest.rate, 2), observed=newest.time, **common),
             Reading(field=Field.INTENSITY_CLASS, value=intensity_class(newest.rate, ptype).value, observed=newest.time, **common),
             Reading(field=Field.PRECIP_TYPE, value=ptype.value, observed=newest.time, **common),
         ]

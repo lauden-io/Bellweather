@@ -178,6 +178,21 @@ class RadarTest(unittest.TestCase):
     def test_marshall_palmer(self):
         self.assertAlmostEqual(rainviewer.rain_rate(23.0), 1.0, delta=0.05)
 
+    def test_snow_has_its_own_relation(self):
+        # Gunn and Marshall: Z = 2000 R^2, so 33 dBZ is 1 mm/h of water as snow
+        self.assertAlmostEqual(rainviewer.rain_rate(33.0, snow=True), 1.0, delta=0.01)
+        # a faint 10 dBZ echo: light rain, but too little snow to count as wet
+        self.assertGreaterEqual(rainviewer.rain_rate(10.0), rainviewer.WET_MM_PER_HOUR)
+        self.assertLess(rainviewer.rain_rate(10.0, snow=True), rainviewer.WET_MM_PER_HOUR)
+        self.assertGreaterEqual(rainviewer.rain_rate(13.1, snow=True), rainviewer.WET_MM_PER_HOUR)
+
+    def test_an_echo_below_the_wet_rate_is_no_precipitation(self):
+        # 13 dBZ of snow is 0.0999 mm/h, which used to round up to 0.10 and count as snowing
+        self.assertEqual(rainviewer.radar_rate(13.0, True), 0.0)
+        self.assertAlmostEqual(rainviewer.radar_rate(14.0, True), 0.112, places=3)
+        self.assertEqual(rainviewer.radar_rate(7.0, False), 0.0)
+        self.assertGreaterEqual(rainviewer.radar_rate(8.0, False), rainviewer.WET_MM_PER_HOUR)
+
 
 def r(field, value, kind, minutes=5, dist=None, elev=None, source="s", sid=None, priority=0):
     return Reading(field=field, value=value, kind=kind, source=source,

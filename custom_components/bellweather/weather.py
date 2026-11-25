@@ -199,6 +199,10 @@ class BellweatherWeather(
             "verification_days": corr.days,
             "verification_source": corr.source,
             "forecast_updated": engine.fetched.isoformat() if engine.fetched else None,
+            # Apart from the condition: snow can fall on bare ground, and the ground can stay
+            # white with nothing falling. A wall panel picks its landscape from these.
+            "snow_on_ground": self._value(Field.SNOW_ON_GROUND),
+            "snow_depth": self._value(Field.SNOW_DEPTH),
         }
 
     @callback

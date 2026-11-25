@@ -126,7 +126,7 @@ def rate_grid(tile: bytes, colours: dict[tuple[int, int, int, int], tuple[float,
                 line.append(0.0)
             else:
                 hit = colours.get(rgba)
-                line.append(rate(hit[0]) if hit else 0.0)
+                line.append(rate(hit[0], hit[1]) if hit else 0.0)  # dBZ, is it snow
         out.append(line)
     return out
 

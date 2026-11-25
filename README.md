@@ -14,7 +14,7 @@ at your home, in Home Assistant.
 It is for everyone: any Home Assistant installation, anywhere in the world,
 with no account, no API key and no extra hardware.
 
-Version **0.1.2** (what is new: [CHANGELOG.md](CHANGELOG.md)).
+Version **0.1.3** (what is new: [CHANGELOG.md](CHANGELOG.md)).
 
 ## Why I built it
 
@@ -72,6 +72,12 @@ Every value shows where it came from in its attributes: the service, the
 kind of source, the station, how far away it is, how old the value is, and
 how many candidates there were. You never have to wonder why it says what
 it says.
+
+The location's weather entity carries the weather now, and in its
+`snow_on_ground` and `snow_depth` attributes whether the landscape is
+white, apart from whether snow is falling: snow can fall on bare ground,
+and the ground can stay white for weeks with nothing falling. A wall panel
+can draw its landscape from them.
 
 ### The next two hours, from radar
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.3 (2026-11-25)
+
+- **No more snow that never reaches the ground.** The radar's snow was
+  converted to an amount with the formula for rain, which makes a faint
+  snow echo look like light snow. On 25 November 2026 a weak band (about
+  10 dBZ) showed as 0.15 mm/h of snow for hours, while the four nearest
+  official rain gauges measured nothing. Snow now has its own
+  formula (Gunn and Marshall, 1958): that echo is 0.07 mm/h of water, below
+  what counts as precipitation, and the weather stays cloudy. The radar
+  nowcast uses it too.
+- A radar echo below 0.1 mm/h is no longer precipitation anywhere: it no
+  longer rounds up to 0.1 mm/h, and it adds nothing to the last hour's
+  amount.
+- **The weather entity says whether there is snow on the ground**
+  (`snow_on_ground`, `snow_depth`), apart from whether snow is falling, so
+  a wall panel can show falling snow over bare ground, and a white
+  landscape after the snow has stopped.
+
 ## 0.1.2 (2026-11-16)
 
 - **Corrections learned elsewhere count only in part.** Bellweather learns
