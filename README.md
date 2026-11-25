@@ -123,9 +123,10 @@ All the numbers, the method, and why it is built this way:
 addresses on six continents runs from November 2026, against MET Norway,
 OpenWeather, Open-Meteo, DWD and ECMWF, with reports after a week, two
 weeks, a month, a quarter, half a year and a year:
-[docs/benchmark.md](docs/benchmark.md). The first report, after one week:
-[docs/benchmark/2026-11-17-1-week.md](docs/benchmark/2026-11-17-1-week.md);
-every forecast and measurement behind it:
+[docs/benchmark.md](docs/benchmark.md). Reports so far: after
+[one week](docs/benchmark/2026-11-17-1-week.md) and
+[two weeks](docs/benchmark/2026-11-24-2-weeks.md); every forecast and
+measurement behind them:
 [Bellweather-Benchmark-Data](https://github.com/lauden-io/Bellweather-Benchmark-Data).
 
 ## Private and secure by design

@@ -185,6 +185,8 @@ Reports so far:
 
 - [1 week, 10–17 November 2026](benchmark/2026-11-17-1-week.md), raw data:
   [2026-11-17-1-week](https://github.com/lauden-io/Bellweather-Benchmark-Data/releases/tag/2026-11-17-1-week)
+- [2 weeks, 10–24 November 2026](benchmark/2026-11-24-2-weeks.md), raw data:
+  [2026-11-24-2-weeks](https://github.com/lauden-io/Bellweather-Benchmark-Data/releases/tag/2026-11-24-2-weeks)
 
 ## How it runs
 
